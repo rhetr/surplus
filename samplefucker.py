@@ -1,33 +1,6 @@
 #!/usr/bin/env python
 '''
-SHORTCUTS:
-    arrow keys navigate in/out of directories
-    space + enter trigger playback
-    TODO:
-        tab to switch between plugins/files
-        slash to search
-        settings dialog ctrl+P
-
-TODO:
-    use qt signals instead of setting fields
-    checkbox to disable/enable playback
-    show waveform
-    settings dialogue
-        default location
-        plugin paths
-    make favorites
-    selection box resizes with window
-    remove outline from selection box
-    figure out how to get information from plugins
-    don't use play?
-
-BUGS:
-    select box behavior resets if you unfocus&refocus window
-
-possible features:
-    smart sample searching (probably not)
-    touch interaction (probably)
-
+samplefucker
 '''
 import sys, os, subprocess
 from PyQt4 import QtGui, QtCore
