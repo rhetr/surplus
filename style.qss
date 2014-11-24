@@ -1,0 +1,27 @@
+mainWindow {
+    background-color: rgb(50,50,50);
+}
+
+mainWindow:pane {
+    border: none;
+}
+
+mainWindow::tab-bar {
+    top: 5px;
+}
+
+QTabBar::tab {
+    background: rgb(150,150,150);
+    border: none;
+    padding: 5px;
+    color: white;
+}
+
+QTabBar::tab:selected {
+    background: rgb(50,50,50);
+    color: rgb(90,132,200);
+}
+
+pathLister {
+    background: rgb(190,190,190);
+}
