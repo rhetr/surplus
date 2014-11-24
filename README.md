@@ -9,13 +9,13 @@ SHORTCUTS
 ---------
 * arrow keys navigate in/out of directories
 * space + enter trigger playback
-* TODO:
-    * tab to switch between plugins/files
-    * slash to search
-    * settings dialog ctrl+P
 
 TODO
 ----
+* shortcuts
+    * tab to switch between plugins/files
+    * slash to search
+    * settings dialog ctrl+P
 * use qt signals instead of setting fields
 * checkbox to disable/enable playback
 * show waveform
