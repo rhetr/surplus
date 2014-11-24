@@ -1,5 +1,7 @@
-Samplefucker
-============
+SurPluS
+=======
+
+_sur_fer/browser for _plu_gins and _s_amples
 
 listen to audio samples in an easily-navigable Qt-based file browser made for the task. when you find what you want drag&drop it into your preferred environment (theoretically--in practice I've only found [Carla](http://github.com/falkTX/Carla) to work with this so far). It'd be cool if eventually it is extended to utilize keyboard shortcuts to send samples to other LAU programs or something.
 
@@ -27,12 +29,13 @@ TODO
 * remove outline from selection box
 * figure out how to get information from plugins
 * don't use play?
+* use either camelCase or snake_case not both
 
 KNOWN BUGS
 ----------
 * select box behavior resets if you unfocus&refocus window
 
-possible features
+POSSIBLE FEATURES
 -----------------
 * smart sample searching (probably not)
 * touch interaction (probably)

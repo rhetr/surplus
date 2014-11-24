@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 '''
-samplefucker
+surplus
 '''
 import sys, os, subprocess
 from PyQt4 import QtGui, QtCore
 
+style_file = 'style.qss'
+default_audio_dir = os.path.expanduser('~')
 line_height= 25
 
 exts = ['wav','mp3','ogg','flac','m4a']
@@ -237,8 +239,7 @@ class mainWindow(QtGui.QTabWidget):
         tab1 = QtGui.QWidget()       
         filePath = pathLister()
         filePath.setFrame(QtGui.QFrame.NoFrame)
-        #filePath.setText('/home/duke/audio/sounds')
-        files = fileBrowser(filePath, '/home/duke/audio/sounds')
+        files = fileBrowser(filePath, default_audio_dir)
         files.setFrameShape(QtGui.QFrame.NoFrame)
 
         #files.setPathDisplay(filePath)
@@ -260,7 +261,7 @@ class mainWindow(QtGui.QTabWidget):
         self.setTabIcon(0,QtGui.QIcon.fromTheme("edit-undo"))
         self.setIconSize(QtCore.QSize(35,35))
         
-        self.setWindowTitle('SAMPLFVKR')
+        self.setWindowTitle('Surplus')
         files.setFocus()
 
     def keyPressEvent(self, event):
@@ -275,7 +276,6 @@ class mainWindow(QtGui.QTabWidget):
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
 
-    style_file = '/home/duke/projects/samplefucker/style.qss'
     with open(style_file, 'r') as content_file:
         content = content_file.read()
     stylesheet = QtCore.QLatin1String(content)
