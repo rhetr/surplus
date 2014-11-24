@@ -1,4 +1,34 @@
 #!/usr/bin/env python
+'''
+SHORTCUTS:
+    arrow keys navigate in/out of directories
+    space + enter trigger playback
+    TODO:
+        tab to switch between plugins/files
+        slash to search
+        settings dialog ctrl+P
+
+TODO:
+    use qt signals instead of setting fields
+    checkbox to disable/enable playback
+    show waveform
+    settings dialogue
+        default location
+        plugin paths
+    make favorites
+    selection box resizes with window
+    remove outline from selection box
+    figure out how to get information from plugins
+    don't use play?
+
+BUGS:
+    select box behavior resets if you unfocus&refocus window
+
+possible features:
+    smart sample searching (probably not)
+    touch interaction (probably)
+
+'''
 import sys, os, subprocess
 from PyQt4 import QtGui, QtCore
 
@@ -48,6 +78,8 @@ class listItem(QtGui.QGraphicsRectItem):
             for item in self.scene().selectedItems():
                 item.setSelected(False)
             self.setSelected(True)
+        else:
+            self.playSample()
     
     def mouseMoveEvent(self, event):
         if self.isFile:
@@ -93,6 +125,7 @@ class fileList(QtGui.QGraphicsScene):
         self.change_dir(path)
 
     def keyPressEvent(self, event):
+        QtGui.QGraphicsScene.keyPressEvent(self, event)
         if type(event) == QtGui.QKeyEvent:
 
             if event.key() == QtCore.Qt.Key_Up: 
@@ -144,7 +177,7 @@ class fileList(QtGui.QGraphicsScene):
         self.cwd = path
         self.cwd_folders, self.cwd_files = self.get_contents()
         self.draw_contents()
-        self.show_path.setText(os.getcwd())
+        self.show_path.setEditText(os.getcwd())
 
     def draw_contents(self):
         view = self.views()
@@ -203,9 +236,22 @@ class fileBrowser(QtGui.QGraphicsView):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
 
-class pathLister(QtGui.QLineEdit):
+class pathLister(QtGui.QComboBox):
     def __init__(self):
        QtGui.QLineEdit.__init__(self)
+       self.setEditable(True)
+       self.browser = None
+
+    def keyPressEvent(self, event):
+        QtGui.QComboBox.keyPressEvent(self, event)
+        if event.key() == QtCore.Qt.Key_Return:
+            if self.browser:
+                print 'lookin up', self.currentText()
+                if os.path.isdir(self.currentText()):
+                        self.browser.scene.change_dir(self.currentText())
+
+    def setBrowser(self, widget):
+        self.browser = widget
 
 class mainWindow(QtGui.QTabWidget):
     def __init__(self):
@@ -215,10 +261,40 @@ class mainWindow(QtGui.QTabWidget):
         self.setWindowFlags(QtCore.Qt.Dialog)
         self.setMinimumHeight(1000)
 
+        tab1 = QtGui.QWidget()       
+        filePath = pathLister()
+        filePath.setFrame(QtGui.QFrame.NoFrame)
+        #filePath.setText('/home/duke/audio/sounds')
+        files = fileBrowser(filePath, '/home/duke/audio/sounds')
+        files.setFrameShape(QtGui.QFrame.NoFrame)
+
+        #files.setPathDisplay(filePath)
+        filePath.setBrowser(files)
+
+        vBoxlayout = QtGui.QVBoxLayout()
+        vBoxlayout.addWidget(filePath)
+        vBoxlayout.addWidget(files)
+        tab1.setLayout(vBoxlayout)   
+
+        tab2 = QtGui.QWidget()
+        pluginSearch = QtGui.QLineEdit()
+        pluginSearch.setText('search...')
+        
+        
+        self.addTab(tab1,"browser")
+        self.addTab(tab2,"plugins")
+        self.setTabPosition(QtGui.QTabWidget.West)
+        self.setTabIcon(0,QtGui.QIcon.fromTheme("edit-undo"))
+        self.setIconSize(QtCore.QSize(35,35))
+        
+        self.setWindowTitle('SAMPLFVKR')
+        files.setFocus()
+
     def keyPressEvent(self, event):
         QtGui.QTabWidget.keyPressEvent(self, event)
-        print 'pressed'
-
+        print 'n'
+        if event.key() == QtCore.Qt.Key_Tab:
+            print 'tab pressed'
     #def touchEvent(self, event):
     #    if event == QtGui.QTouchEvent.TouchScreen:
     #        print 'ok'
@@ -234,31 +310,6 @@ if __name__ == '__main__':
    
     tabs = mainWindow()
 
-    tab1 = QtGui.QWidget()       
-    filePath = pathLister()
-    filePath.setFrame(QtGui.QFrame.NoFrame)
-    #filePath.setText('/home/duke/audio/sounds')
-    files = fileBrowser(filePath, '/home/duke/audio/sounds')
-    files.setFrameShape(QtGui.QFrame.NoFrame)
-    vBoxlayout = QtGui.QVBoxLayout()
-    vBoxlayout.addWidget(filePath)
-    vBoxlayout.addWidget(files)
-    tab1.setLayout(vBoxlayout)   
-
-    tab2 = QtGui.QWidget()
-    pluginSearch = QtGui.QLineEdit()
-    pluginSearch.setText('search...')
-    
-    
-    tabs.addTab(tab1,"browser")
-    tabs.addTab(tab2,"plugins")
-    tabs.setTabPosition(QtGui.QTabWidget.West)
-    tabs.setTabIcon(0,QtGui.QIcon.fromTheme("edit-undo"))
-    tabs.setIconSize(QtCore.QSize(35,35))
-    
-    tabs.setWindowTitle('SAMPLFVKR')
-    files.setFocus()
-    
     tabs.show()
     sys.exit(app.exec_())
     subprocess.call(['pkill','play'])
