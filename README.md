@@ -7,6 +7,7 @@ listen to audio samples in an easily-navigable Qt-based file browser made for th
 
 plugin browsing (ladspa,dssi,lv2,vst) to come hopefully.
 
+
 SHORTCUTS
 ---------
 * arrow keys navigate in/out of directories
@@ -14,28 +15,36 @@ SHORTCUTS
 
 TODO
 ----
-* shortcuts
-    * tab to switch between plugins/files
-    * slash to search
-    * settings dialog ctrl+P
-* use qt signals instead of setting fields
+###sample interaction
 * checkbox to disable/enable playback
 * show waveform
+* scrolling through long samples
+
+###usability
+* make favorites (favoriting directories as well as files and plugins)
 * settings dialogue
     * default location
     * plugin paths
-* make favorites
-* selection box resizes with window
+* more shortcuts
+    * tab to switch between plugins/files
+    * slash to search
+    * settings dialog ctrl+P
+* sample tagging/smart sample searching
+
+###ui/interaction
 * remove outline from selection box
+* selection box resizes with window
+* move scrollbar to left side underneath tabs
+* touch interaction
+
+###plugins
 * figure out how to get information from plugins
-* don't use play?
+
+###programming structure
 * use either camelCase or snake_case not both
+* use qt signals instead of setting fields
+* don't use play
 
 KNOWN BUGS
 ----------
 * select box behavior resets if you unfocus&refocus window
-
-POSSIBLE FEATURES
------------------
-* smart sample searching (probably not)
-* touch interaction (probably)
