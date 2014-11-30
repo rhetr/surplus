@@ -8,6 +8,11 @@ listen to audio samples in an easily-navigable Qt-based file browser made for th
 plugin browsing (ladspa,dssi,lv2,vst) to come hopefully.
 
 
+USAGE
+-----
+TODO
+
+
 SHORTCUTS
 ---------
 * arrow keys navigate in/out of directories
