@@ -92,7 +92,7 @@ class listItem(QtGui.QGraphicsRectItem):
 
     def mouseReleaseEvent(self, event):
         if not self.isFile:
-            self.scene().change_dir(self.label.text())
+            self.scene().changeDir(self.label.text())
 
 class fileList(QtGui.QGraphicsScene):
     tab_pressed = QtCore.pyqtSignal(bool)
@@ -105,7 +105,7 @@ class fileList(QtGui.QGraphicsScene):
 
         self.items = []
         self.prev_dir = None
-        self.change_dir(path)
+        self.changeDir(path)
     
     def event(self, event):
         if event.type()==QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Tab:
@@ -138,14 +138,14 @@ class fileList(QtGui.QGraphicsScene):
             #TODO ensure_visible prev_dir but it has to be searched by label
             elif event.key() == QtCore.Qt.Key_Left: 
                 self.prev_dir = self.cwd
-                self.change_dir('..')
+                self.changeDir('..')
             elif event.key() == QtCore.Qt.Key_Right: 
                 if not self.selectedItems()[0].isFile:
                     self.prev_dir = self.selectedItems()[0].label.text()
-                    self.change_dir(self.selectedItems()[0].label.text())
+                    self.changeDir(self.selectedItems()[0].label.text())
             elif event.key() == QtCore.Qt.Key_Return:
                 if not self.selectedItems()[0].isFile:
-                    self.change_dir(self.selectedItems()[0].label.text())
+                    self.changeDir(self.selectedItems()[0].label.text())
                 else:
                     self.selectedItems()[0].playSample()
                     #play(self.selectedItems()[0].label.text())
@@ -159,15 +159,15 @@ class fileList(QtGui.QGraphicsScene):
             for item in self.items:
                 self.removeItem(item)
 
-    def change_dir(self, path):
+    def changeDir(self, path):
         self.clean()
         os.chdir(path)
         self.cwd = path
-        self.cwd_folders, self.cwd_files = self.get_contents()
-        self.draw_contents()
+        self.cwd_folders, self.cwd_files = self.getContents()
+        self.drawContents()
         self.path_updated.emit(os.getcwd())
 
-    def draw_contents(self):
+    def drawContents(self):
         view = self.views()
         c = 0
         self.items = []
@@ -193,12 +193,12 @@ class fileList(QtGui.QGraphicsScene):
             view[0].setSceneRect(rect)
 
 
-    def is_audio(self, a_file):
+    def isAudio(self, a_file):
         if os.path.splitext(a_file)[1].lower()[1:] in exts:
             return True
         return False
 
-    def get_contents(self):
+    def getContents(self):
         entries = os.listdir(os.getcwd())
         entries = [i for i in entries if not i.startswith('.')]
         dir_list = ['..']
@@ -207,7 +207,7 @@ class fileList(QtGui.QGraphicsScene):
             if os.path.isdir(entry):
                 dir_list.append(entry)
             elif os.path.isfile(entry):
-                if self.is_audio(entry):
+                if self.isAudio(entry):
                     file_list.append(entry)
         dir_list.sort(key=str.lower)
         file_list.sort(key=str.lower)
@@ -314,6 +314,7 @@ class mainWindow(QtGui.QTabWidget):
 
         self.files.scene.path_updated.connect(self.updatePath)
         self.filePath.path_updated.connect(self.updateList)
+        self.files.scene.path_updated.emit(default_audio_dir)
     
     def event(self, event):
         if event.type()==QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Tab:
@@ -329,7 +330,7 @@ class mainWindow(QtGui.QTabWidget):
         self.filePath.setEditText(text)
 
     def updateList(self, text):
-        self.files.scene.change_dir(text)
+        self.files.scene.changeDir(text)
 
 
     #def touchEvent(self, event):
