@@ -95,19 +95,21 @@ class listItem(QtGui.QGraphicsRectItem):
             self.scene().change_dir(self.label.text())
 
 class fileList(QtGui.QGraphicsScene):
-    def __init__(self, path, widget, parent=None):
+    tab_pressed = QtCore.pyqtSignal(bool)
+    path_updated = QtCore.pyqtSignal(str)
+
+    def __init__(self, path, parent=None):
         QtGui.QGraphicsScene.__init__(self, parent)
         self.parent = parent
         self.setBackgroundBrush(QtGui.QColor(50, 50, 50))
 
         self.items = []
         self.prev_dir = None
-        self.show_path = widget
         self.change_dir(path)
     
     def event(self, event):
         if event.type()==QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Tab:
-            #self.emit(SIGNAL
+            self.tab_pressed.emit(False)
             return True
         return QtGui.QGraphicsScene.event(self, event)
 
@@ -151,7 +153,6 @@ class fileList(QtGui.QGraphicsScene):
                 if self.selectedItems()[0].isFile:
                     self.selectedItems()[0].playSample()
 
-
     def clean(self):
         #self.clear()
         if self.items:
@@ -164,7 +165,7 @@ class fileList(QtGui.QGraphicsScene):
         self.cwd = path
         self.cwd_folders, self.cwd_files = self.get_contents()
         self.draw_contents()
-        self.show_path.setEditText(os.getcwd())
+        self.path_updated.emit(os.getcwd())
 
     def draw_contents(self):
         view = self.views()
@@ -215,32 +216,49 @@ class fileList(QtGui.QGraphicsScene):
 
 class fileBrowser(QtGui.QGraphicsView):
     '''the file browser'''
-    def __init__(self, widget, path=os.path.expanduser("~")):
+    def __init__(self, path=os.path.expanduser("~")):
         QtGui.QGraphicsView.__init__(self)
-        self.scene = fileList(path, widget, self)
+        self.scene = fileList(path, self)
         self.setScene(self.scene)
         #self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
 
+    def event(self, event):
+        if event.type()==QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Tab:
+            print 'yes'
+            self.scene.tab_pressed.emit(False)
+            return True
+        return QtGui.QGraphicsView.event(self, event)
+
 class pathLister(QtGui.QComboBox):
+    path_updated = QtCore.pyqtSignal(str)
+    
     def __init__(self):
        QtGui.QLineEdit.__init__(self)
        self.setEditable(True)
-       self.browser = None
 
     def keyPressEvent(self, event):
         QtGui.QComboBox.keyPressEvent(self, event)
         if event.key() == QtCore.Qt.Key_Return:
-            if self.browser:
-                print 'lookin up', self.currentText()
-                if os.path.isdir(self.currentText()):
-                        self.browser.scene.change_dir(self.currentText())
+            print 'lookin up', self.currentText()
+            if os.path.isdir(self.currentText()):
+                self.path_updated.emit(self.currentText())
 
-    def setBrowser(self, widget):
-        self.browser = widget
+class widget(QtGui.QWidget):
+    def __init__(self):
+        QtGui.QWidget.__init__(self)
+
+    def event(self, event):
+        if event.type()==QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Tab:
+            return True
+        return QtGui.QWidget.event(self, event)
+
 
 class mainWindow(QtGui.QTabWidget):
+
+    tab_pressed = QtCore.pyqtSignal(bool)
+
     def __init__(self):
         QtGui.QTabWidget.__init__(self) 
         #self.setAttribute(QtCore.Qt.WA_AcceptTouchEvents)
@@ -248,34 +266,38 @@ class mainWindow(QtGui.QTabWidget):
         self.setWindowFlags(QtCore.Qt.Dialog)
         self.setMinimumHeight(1000)
 
-        self.tab1 = QtGui.QWidget()       
+        #self.tab1 = QtGui.QWidget()       
+        self.tab1 = widget()
         self.filePath = pathLister()
         self.filePath.setFrame(QtGui.QFrame.NoFrame)
-        self.files = fileBrowser(self.filePath, default_audio_dir)
+        self.files = fileBrowser(default_audio_dir)
         self.files.setFrameShape(QtGui.QFrame.NoFrame)
-
-        self.filePath.setBrowser(self.files)
-
 
         self.playCheck = QtGui.QCheckBox()
         self.waveRect = QtGui.QWidget()
-        hBox = QtGui.QHBoxLayout()
-        hBox.addWidget(self.playCheck)
-        hBox.addWidget(self.waveRect)
+        #hBox = QtGui.QHBoxLayout()
+        #hBox.addWidget(self.playCheck)
+        #hBox.addWidget(self.waveRect)
 
-        vBoxlayout = QtGui.QVBoxLayout()
-        vBoxlayout.setSpacing(0)
-        vBoxlayout.setMargin(0)
-        vBoxlayout.setContentsMargins(0,0,0,0)
-        vBoxlayout.addWidget(self.filePath)
-        vBoxlayout.addWidget(self.files)
-        vBoxlayout.addLayout(hBox)
-        self.tab1.setLayout(vBoxlayout)   
+        tab1Layout = QtGui.QVBoxLayout()
+        tab1Layout.setSpacing(0)
+        tab1Layout.setMargin(0)
+        tab1Layout.setContentsMargins(0,0,0,0)
+        tab1Layout.addWidget(self.filePath)
+        tab1Layout.addWidget(self.files)
+        #tab1Layout.addLayout(hBox)
+        self.tab1.setLayout(tab1Layout)   
 
         self.tab2 = QtGui.QWidget()
         self.pluginSearch = QtGui.QLineEdit()
         self.pluginSearch.setText('search...')
-        
+
+        #tab2Layout = QtGui.QVBoxLayout()
+        #tab2Layout.setSpacing(0)
+        #tab2Layout.setMargin(0)
+        #tab2Layout.setContentsMargins(0,0,0,0)
+        #tab2Layout.addWidget(self.pluginSearch)
+        #self.tab2.setLayout(tab2Layout)
         
         self.addTab(self.tab1,"browser")
         self.addTab(self.tab2,"plugins")
@@ -285,12 +307,30 @@ class mainWindow(QtGui.QTabWidget):
         
         self.setWindowTitle('Surplus')
         self.files.setFocus()
+
+        #connections
+        self.files.scene.tab_pressed.connect(self.switchTabs)
+        self.tab_pressed.connect(self.switchTabs)
+
+        self.files.scene.path_updated.connect(self.updatePath)
+        self.filePath.path_updated.connect(self.updateList)
     
     def event(self, event):
         if event.type()==QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Tab:
-                print 'tabpress'
-                return True
+            self.tab_pressed.emit(True)
+            return True
         return QtGui.QTabWidget.event(self, event)
+
+    def switchTabs(self, tab):
+        currTab = self.tab1 if tab else self.tab2
+        self.setCurrentWidget(currTab)
+
+    def updatePath(self, text):
+        self.filePath.setEditText(text)
+
+    def updateList(self, text):
+        self.files.scene.change_dir(text)
+
 
     #def touchEvent(self, event):
     #    if event == QtGui.QTouchEvent.TouchScreen:
