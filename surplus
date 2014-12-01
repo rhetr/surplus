@@ -6,7 +6,7 @@ import sys, os, subprocess
 from PyQt4 import QtGui, QtCore
 
 style_file = os.path.expanduser('~')+'/.config/surplus/style.qss'
-default_audio_dir = os.path.expanduser('~')
+default_audio_dir = os.path.expanduser('~')+'/audio/sounds'
 line_height= 25
 
 exts = ['wav','mp3','ogg','flac','m4a']
@@ -15,21 +15,21 @@ def play(a_file):
     subprocess.Popen(['play', a_file], close_fds=True)
 
 class listItem(QtGui.QGraphicsRectItem):
-    def __init__(self, text, isFile=True):
+    def __init__(self, text, is_file=True):
         QtGui.QGraphicsRectItem.__init__(self, 0, 0, 280, line_height)
+        self.is_file = is_file
+        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
+
         clearpen = QtGui.QPen(QtGui.QColor(0,0,0,0))
         self.setPen(clearpen)
-        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
-        if not isFile:
-            self.label = QtGui.QGraphicsSimpleTextItem(text+'/', parent=self)
-        else:
-            self.label = QtGui.QGraphicsSimpleTextItem(text, parent=self)
+        the_text = text[:37]+'...' if len(text) > 40 else text
+        the_text += '/' if not is_file else ''
+        self.label = QtGui.QGraphicsSimpleTextItem(the_text, parent=self)
         self.label.setPos(10, 5)
         self.label.setBrush(QtCore.Qt.white)
-        self.isFile = isFile
         font = QtGui.QFont("Source Sans Pro")#"Source Sans Pro")#"Source Sans Pro",10)
         font.setPointSize(10)
-        if not isFile:
+        if not is_file:
             font.setBold(True)
         self.label.setFont(font)
 
@@ -47,7 +47,7 @@ class listItem(QtGui.QGraphicsRectItem):
             self.scene().views()[0].ensureVisible(self, xMargin=-50)
             self.setBrush(QtGui.QColor(50,102,150))
 
-            if self.isFile:
+            if self.is_file:
                 self.playSample()
                 #play(self.label.text())
         else:
@@ -63,7 +63,7 @@ class listItem(QtGui.QGraphicsRectItem):
             self.playSample()
     
     def mouseMoveEvent(self, event):
-        if self.isFile:
+        if self.is_file:
             mimeData = QtCore.QMimeData()
             path = os.path.abspath(str(self.label.text()))
             mimeData.setUrls([QtCore.QUrl.fromLocalFile(os.path.abspath(str(self.label.text())))])
@@ -91,11 +91,10 @@ class listItem(QtGui.QGraphicsRectItem):
 
 
     def mouseReleaseEvent(self, event):
-        if not self.isFile:
+        if not self.is_file:
             self.scene().changeDir(self.label.text())
 
 class fileList(QtGui.QGraphicsScene):
-    tab_pressed = QtCore.pyqtSignal(bool)
     path_updated = QtCore.pyqtSignal(str)
 
     def __init__(self, path, parent=None):
@@ -107,11 +106,11 @@ class fileList(QtGui.QGraphicsScene):
         self.prev_dir = None
         self.changeDir(path)
     
-    def event(self, event):
-        if event.type()==QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Tab:
-            self.tab_pressed.emit(False)
-            return True
-        return QtGui.QGraphicsScene.event(self, event)
+    #def event(self, event):
+    #    if event.type()==QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Tab:
+    #        self.tab_pressed.emit()
+    #        return True
+    #    return QtGui.QGraphicsScene.event(self, event)
 
     def keyPressEvent(self, event):
         QtGui.QGraphicsScene.keyPressEvent(self, event)
@@ -140,17 +139,17 @@ class fileList(QtGui.QGraphicsScene):
                 self.prev_dir = self.cwd
                 self.changeDir('..')
             elif event.key() == QtCore.Qt.Key_Right: 
-                if not self.selectedItems()[0].isFile:
+                if not self.selectedItems()[0].is_file:
                     self.prev_dir = self.selectedItems()[0].label.text()
                     self.changeDir(self.selectedItems()[0].label.text())
             elif event.key() == QtCore.Qt.Key_Return:
-                if not self.selectedItems()[0].isFile:
+                if not self.selectedItems()[0].is_file:
                     self.changeDir(self.selectedItems()[0].label.text())
                 else:
                     self.selectedItems()[0].playSample()
                     #play(self.selectedItems()[0].label.text())
             elif event.key() == QtCore.Qt.Key_Space:
-                if self.selectedItems()[0].isFile:
+                if self.selectedItems()[0].is_file:
                     self.selectedItems()[0].playSample()
 
     def clean(self):
@@ -216,6 +215,10 @@ class fileList(QtGui.QGraphicsScene):
 
 class fileBrowser(QtGui.QGraphicsView):
     '''the file browser'''
+
+    tab_pressed = QtCore.pyqtSignal()
+    slash_pressed = QtCore.pyqtSignal()
+
     def __init__(self, path=os.path.expanduser("~")):
         QtGui.QGraphicsView.__init__(self)
         self.scene = fileList(path, self)
@@ -224,19 +227,43 @@ class fileBrowser(QtGui.QGraphicsView):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
 
+    def paint(self, painter, option, widget=None):
+        QtGui.QGraphicsView.paint(self,painter,paint_option,widget)
+        self.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+
     def event(self, event):
-        if event.type()==QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Tab:
-            print 'yes'
-            self.scene.tab_pressed.emit(False)
-            return True
+        if event.type()==QtCore.QEvent.KeyPress:
+                if event.key() == QtCore.Qt.Key_Tab:
+                    print 'browsetab'
+                    self.tab_pressed.emit()
+                    return True
+                elif event.key() == QtCore.Qt.Key_Slash:
+                    print 'slash'
+                    self.slash_pressed.emit()
+                    return True
         return QtGui.QGraphicsView.event(self, event)
 
 class pathLister(QtGui.QComboBox):
     path_updated = QtCore.pyqtSignal(str)
+    tab_pressed = QtCore.pyqtSignal()
+    esc_pressed = QtCore.pyqtSignal()
     
     def __init__(self):
        QtGui.QLineEdit.__init__(self)
        self.setEditable(True)
+
+    def event(self, event):
+        if event.type()==QtCore.QEvent.KeyPress:
+            if event.key() == QtCore.Qt.Key_Tab:
+                print 'pathptab'
+                self.tab_pressed.emit()
+                return True
+            elif event.key() == QtCore.Qt.Key_Escape:
+                print 'escape'
+                self.setEditText(self.prev_text)
+                self.esc_pressed.emit()
+                return True
+        return QtGui.QComboBox.event(self, event)
 
     def keyPressEvent(self, event):
         QtGui.QComboBox.keyPressEvent(self, event)
@@ -245,19 +272,11 @@ class pathLister(QtGui.QComboBox):
             if os.path.isdir(self.currentText()):
                 self.path_updated.emit(self.currentText())
 
-class widget(QtGui.QWidget):
-    def __init__(self):
-        QtGui.QWidget.__init__(self)
-
-    def event(self, event):
-        if event.type()==QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Tab:
-            return True
-        return QtGui.QWidget.event(self, event)
-
+    def focusInEvent(self, event):
+        self.prev_text = self.currentText()
+        QtGui.QComboBox.focusInEvent(self, event)    
 
 class mainWindow(QtGui.QTabWidget):
-
-    tab_pressed = QtCore.pyqtSignal(bool)
 
     def __init__(self):
         QtGui.QTabWidget.__init__(self) 
@@ -266,8 +285,7 @@ class mainWindow(QtGui.QTabWidget):
         self.setWindowFlags(QtCore.Qt.Dialog)
         self.setMinimumHeight(1000)
 
-        #self.tab1 = QtGui.QWidget()       
-        self.tab1 = widget()
+        self.tab1 = QtGui.QWidget()       
         self.filePath = pathLister()
         self.filePath.setFrame(QtGui.QFrame.NoFrame)
         self.files = fileBrowser(default_audio_dir)
@@ -291,13 +309,15 @@ class mainWindow(QtGui.QTabWidget):
         self.tab2 = QtGui.QWidget()
         self.pluginSearch = QtGui.QLineEdit()
         self.pluginSearch.setText('search...')
+        self.files1 = fileBrowser(default_audio_dir)
+        self.files1.setFrameShape(QtGui.QFrame.NoFrame)
 
-        #tab2Layout = QtGui.QVBoxLayout()
-        #tab2Layout.setSpacing(0)
-        #tab2Layout.setMargin(0)
-        #tab2Layout.setContentsMargins(0,0,0,0)
-        #tab2Layout.addWidget(self.pluginSearch)
-        #self.tab2.setLayout(tab2Layout)
+        tab2Layout = QtGui.QVBoxLayout()
+        tab2Layout.setSpacing(0)
+        tab2Layout.setMargin(0)
+        tab2Layout.setContentsMargins(0,0,0,0)
+        tab2Layout.addWidget(self.files1)
+        self.tab2.setLayout(tab2Layout)
         
         self.addTab(self.tab1,"browser")
         self.addTab(self.tab2,"plugins")
@@ -309,22 +329,25 @@ class mainWindow(QtGui.QTabWidget):
         self.files.setFocus()
 
         #connections
-        self.files.scene.tab_pressed.connect(self.switchTabs)
-        self.tab_pressed.connect(self.switchTabs)
+        self.files.tab_pressed.connect(self.switchTabs)
+        self.files.slash_pressed.connect(self.focusPath)
+        self.filePath.tab_pressed.connect(self.switchTabs)
+        self.filePath.esc_pressed.connect(self.focusList)
+        self.files1.tab_pressed.connect(self.switchTabs)
+        self.files1.slash_pressed.connect(self.focusPath)
 
         self.files.scene.path_updated.connect(self.updatePath)
         self.filePath.path_updated.connect(self.updateList)
         self.files.scene.path_updated.emit(default_audio_dir)
-    
-    def event(self, event):
-        if event.type()==QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Tab:
-            self.tab_pressed.emit(True)
-            return True
-        return QtGui.QTabWidget.event(self, event)
 
-    def switchTabs(self, tab):
-        currTab = self.tab1 if tab else self.tab2
-        self.setCurrentWidget(currTab)
+    def switchTabs(self):
+        self.setCurrentIndex((self.currentIndex()+1) % self.count() )
+
+    def focusList(self):
+        self.currentWidget().focusNextChild()
+
+    def focusPath(self):
+        self.currentWidget().focusPreviousChild()
 
     def updatePath(self, text):
         self.filePath.setEditText(text)
