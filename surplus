@@ -12,7 +12,8 @@ line_height= 25
 exts = ['wav','mp3','ogg','flac','m4a']
 
 def play(a_file):
-    subprocess.Popen(['play', a_file], close_fds=True)
+    pass
+    #subprocess.Popen(['play', a_file], close_fds=True)
 
 class listItem(QtGui.QGraphicsRectItem):
     def __init__(self, text, is_file=True):
@@ -44,7 +45,7 @@ class listItem(QtGui.QGraphicsRectItem):
     def setSelected(self, selected):
         QtGui.QGraphicsRectItem.setSelected(self, selected)
         if selected:
-            self.scene().views()[0].ensureVisible(self, xMargin=-50)
+            self.scene().parent.ensureVisible(self, xMargin=-50)
             self.setBrush(QtGui.QColor(50,102,150))
 
             if self.is_file:
@@ -103,6 +104,7 @@ class fileList(QtGui.QGraphicsScene):
 
         self.items = []
         self.prev_dir = None
+        self.cwd = None
         self.changeDir(path)
     
     #def event(self, event):
@@ -112,11 +114,13 @@ class fileList(QtGui.QGraphicsScene):
     #    return QtGui.QGraphicsScene.event(self, event)
 
     def keyPressEvent(self, event):
-        QtGui.QGraphicsScene.keyPressEvent(self, event)
+        #QtGui.QGraphicsScene.keyPressEvent(self, event)
         if type(event) == QtGui.QKeyEvent:
 
             if event.key() == QtCore.Qt.Key_Up: 
-                if not self.selectedItems() or 0==self.items.index(self.selectedItems()[0]):
+                if not self.selectedItems():
+                    self.items[1].setSelected(True)
+                elif 0==self.items.index(self.selectedItems()[0]):
                     self.items[0].setSelected(True)
                 else:
                     cursel = self.items.index(self.selectedItems()[0])
@@ -132,14 +136,23 @@ class fileList(QtGui.QGraphicsScene):
                     cursel = self.items.index(self.selectedItems()[0])
                     self.items[cursel].setSelected(False)
                     self.items[cursel+1].setSelected(True)
+            elif event.key() == QtCore.Qt.Key_Home:
+                    cursel = self.items.index(self.selectedItems()[0])
+                    self.items[cursel].setSelected(False)
+                    self.items[1].setSelected(True)
+            elif event.key() == QtCore.Qt.Key_End:
+                    cursel = self.items.index(self.selectedItems()[0])
+                    self.items[cursel].setSelected(False)
+                    self.items[-1].setSelected(True)
+
 
             #TODO ensure_visible prev_dir but it has to be searched by label
             elif event.key() == QtCore.Qt.Key_Left: 
-                self.prev_dir = self.cwd
+                #self.prev_dir = self.cwd
                 self.changeDir('..')
             elif event.key() == QtCore.Qt.Key_Right: 
                 if not self.selectedItems()[0].is_file:
-                    self.prev_dir = self.selectedItems()[0].label.text()
+                    #self.prev_dir = self.selectedItems()[0].label.text()
                     self.changeDir(self.selectedItems()[0].label.text())
             elif event.key() == QtCore.Qt.Key_Return:
                 if not self.selectedItems()[0].is_file:
@@ -159,14 +172,16 @@ class fileList(QtGui.QGraphicsScene):
 
     def changeDir(self, path):
         self.clean()
-        os.chdir(path)
+        self.prev_dir = self.cwd[:-1] if self.cwd else None
         self.cwd = path
+        print self.prev_dir, self.cwd
+        os.chdir(path)
         self.cwd_folders, self.cwd_files = self.getContents()
         self.drawContents()
         self.path_updated.emit(os.getcwd())
 
     def drawContents(self):
-        view = self.views()
+        #view = self.views() if self.views() else self.parent
         c = 0
         self.items = []
         for entry in self.cwd_folders:
@@ -174,10 +189,10 @@ class fileList(QtGui.QGraphicsScene):
             entry_rect.setPos(0, line_height+c*line_height)
             self.addItem(entry_rect)
             self.items.append(entry_rect)
-            if self.prev_dir:
-                if entry==self.prev_dir:
-                    view[0].ensureVisible(entry_rect, xMargin=-50)
-                    entry_rect.setSelected(True)
+            if entry==self.prev_dir:
+                print 'yes'
+                self.parent.ensureVisible(entry_rect, xMargin=-50)
+                entry_rect.setSelected(True)
             c += 1
         for entry in self.cwd_files:
             entry_rect = listItem(entry, True)
@@ -186,10 +201,12 @@ class fileList(QtGui.QGraphicsScene):
             self.items.append(entry_rect)
             c += 1
 
-        if view:
-            rect = self.itemsBoundingRect() 
-            view[0].setSceneRect(rect)
+        if not self.selectedItems():
+            self.items[1].setSelected(True)
 
+        #if view:
+        rect = self.itemsBoundingRect() 
+        self.parent.setSceneRect(rect)
 
     def isAudio(self, a_file):
         if os.path.splitext(a_file)[1].lower()[1:] in exts:
@@ -222,13 +239,16 @@ class fileBrowser(QtGui.QGraphicsView):
         QtGui.QGraphicsView.__init__(self)
         self.scene = fileList(path, self)
         self.setScene(self.scene)
-        #self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.scrollBar = QtGui.QScrollBar(self)
+        self.scrollBar.move(QtCore.QPoint(-20,-20))
+        self.setVerticalScrollBar(self.scrollBar)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+        self.scrollBar.move(200,200)
 
     def paint(self, painter, option, widget=None):
         QtGui.QGraphicsView.paint(self,painter,paint_option,widget)
-        self.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
 
     def event(self, event):
         if event.type()==QtCore.QEvent.KeyPress:
