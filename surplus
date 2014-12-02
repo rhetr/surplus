@@ -5,8 +5,8 @@ surplus
 import sys, os, subprocess
 from PyQt4 import QtGui, QtCore
 
-style_file = os.path.expanduser('~')+'/.config/surplus/style.qss'
-default_audio_dir = os.path.expanduser('~')+'/audio/sounds'
+style_file = 'style.qss'
+default_audio_dir = os.path.expanduser('~')
 line_height= 25
 
 exts = ['wav','mp3','ogg','flac','m4a']
@@ -27,9 +27,9 @@ class listItem(QtGui.QGraphicsRectItem):
         self.label = QtGui.QGraphicsSimpleTextItem(the_text, parent=self)
         self.label.setPos(10, 5)
         self.label.setBrush(QtCore.Qt.white)
-        font = QtGui.QFont("Source Sans Pro")#"Source Sans Pro")#"Source Sans Pro",10)
-        font.setPointSize(10)
+        font = QtGui.QFont()#"Source Sans Pro")
         if not is_file:
+            font.setPointSize(8)
             font.setBold(True)
         self.label.setFont(font)
 
@@ -49,7 +49,6 @@ class listItem(QtGui.QGraphicsRectItem):
 
             if self.is_file:
                 self.playSample()
-                #play(self.label.text())
         else:
             self.setBrush(QtGui.QColor(50,50,50))
 
@@ -234,11 +233,9 @@ class fileBrowser(QtGui.QGraphicsView):
     def event(self, event):
         if event.type()==QtCore.QEvent.KeyPress:
                 if event.key() == QtCore.Qt.Key_Tab:
-                    print 'browsetab'
                     self.tab_pressed.emit()
                     return True
                 elif event.key() == QtCore.Qt.Key_Slash:
-                    print 'slash'
                     self.slash_pressed.emit()
                     return True
         return QtGui.QGraphicsView.event(self, event)
@@ -255,11 +252,9 @@ class pathLister(QtGui.QComboBox):
     def event(self, event):
         if event.type()==QtCore.QEvent.KeyPress:
             if event.key() == QtCore.Qt.Key_Tab:
-                print 'pathptab'
                 self.tab_pressed.emit()
                 return True
             elif event.key() == QtCore.Qt.Key_Escape:
-                print 'escape'
                 self.setEditText(self.prev_text)
                 self.esc_pressed.emit()
                 return True
@@ -268,7 +263,7 @@ class pathLister(QtGui.QComboBox):
     def keyPressEvent(self, event):
         QtGui.QComboBox.keyPressEvent(self, event)
         if event.key() == QtCore.Qt.Key_Return:
-            print 'lookin up', self.currentText()
+            print 'looking up', self.currentText()
             if os.path.isdir(self.currentText()):
                 self.path_updated.emit(self.currentText())
 

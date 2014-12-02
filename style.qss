@@ -7,13 +7,13 @@ mainWindow:pane {
 }
 
 mainWindow::tab-bar {
-    top: 5px;
+    top: 25px;
 }
 
 QTabBar::tab {
     background: rgb(150,150,150);
     border: none;
-    //padding: 5px;
+    padding: 5 3;
     color: white;
 }
 
@@ -24,4 +24,12 @@ QTabBar::tab:selected {
 
 pathLister {
     background: rgb(190,190,190);
+    border-radius:0px;
 }
+
+pathLister::drop-down {
+    padding: 0px;
+    width:0;
+    border-style: none;
+}
+
