@@ -2,7 +2,7 @@
 '''
 surplus
 '''
-import sys, os, subprocess
+import sys, os, subprocess, signal, datetime
 from PyQt4 import QtGui, QtCore
 
 style_file = 'style.qss'
@@ -11,11 +11,61 @@ line_height= 25
 
 exts = ['wav','mp3','ogg','flac','m4a']
 
+def getLength(a_file):
+    x = ['ffmpeg', '-i', str(a_file)]
+    try:
+        output = subprocess.check_output(x,stderr=subprocess.STDOUT)
+    except Exception, e:
+        output = str(e.output)
+    finished = output.split('\n')
+    for line in finished:
+        if "Duration" in line:
+            finished = line
+            break
+    return datetime.datetime.strptime(finished.split()[1][:-1],'%H:%M:%S.%f').time()
+
 def play(a_file):
-    pass
-    #subprocess.Popen(['play', a_file], close_fds=True)
+    print getLength(a_file)
+    return subprocess.Popen(['play', '-q', a_file],
+                            stdout=subprocess.PIPE,
+                            preexec_fn=os.setsid)
+
+class playView(QtGui.QGraphicsView):
+    def __init__(self):
+        QtGui.QGraphicsView.__init__(self)
+
+        self.scene = QtGui.QGraphicsScene(self)
+        self.item = QtGui.QGraphicsLineItem(0,0,0, 40)
+        self.rect = QtGui.QGraphicsRectItem(0,0,200,40)
+        self.scene.addItem(self.item)
+        self.scene.addItem(self.rect)
+        self.setScene(self.scene)
+
+
+    def mil(self, length):
+        return length.hour*3.6e6 + length.minute * 6e4 + length.second * 1000 + length.microsecond * .001
+
+    def loadFile(self, a_file):
+        length = self.mil(getLength(a_file))
+
+        self.tl = QtCore.QTimeLine(length)
+        self.tl.setFrameRange(0, length/10)
+        self.a = QtGui.QGraphicsItemAnimation()
+        self.a.setItem(self.item)
+        self.a.setTimeLine(self.tl)
+
+        self.a.setPosAt(1,QtCore.QPointF(200,0))
+
+    def setWaveform(self):
+        pass
+
+    def animate(self):
+        self.tl.start()
 
 class listItem(QtGui.QGraphicsRectItem):
+    #sample_playing = QtCore.pyqtSignal()
+    #sample_
+
     def __init__(self, text, is_file=True):
         QtGui.QGraphicsRectItem.__init__(self, 0, 0, 280, line_height)
         self.is_file = is_file
@@ -33,6 +83,7 @@ class listItem(QtGui.QGraphicsRectItem):
             font.setPointSize(8)
             font.setBold(True)
         self.label.setFont(font)
+        self.playing = None
 
     def paint(self, painter, option, widget=None):
         paint_option = option
@@ -40,7 +91,9 @@ class listItem(QtGui.QGraphicsRectItem):
         QtGui.QGraphicsRectItem.paint(self,painter,paint_option,widget)
 
     def playSample(self):
-        play(self.label.text())
+        if self.playing:
+            os.killpg(self.playing.pid, signal.SIGTERM)
+        self.playing = play(self.label.text())
 
     def setSelected(self, selected):
         QtGui.QGraphicsRectItem.setSelected(self, selected)
@@ -52,6 +105,8 @@ class listItem(QtGui.QGraphicsRectItem):
                 self.playSample()
         else:
             self.setBrush(QtGui.QColor(50,50,50))
+            if self.playing:
+                os.killpg(self.playing.pid, signal.SIGTERM)
 
     def mousePressEvent(self, event):
         #QtGui.QPushButton.mousePressEvent(self, event)
@@ -159,7 +214,6 @@ class fileList(QtGui.QGraphicsScene):
                     self.changeDir(self.selectedItems()[0].label.text())
                 else:
                     self.selectedItems()[0].playSample()
-                    #play(self.selectedItems()[0].label.text())
             elif event.key() == QtCore.Qt.Key_Space:
                 if self.selectedItems()[0].is_file:
                     self.selectedItems()[0].playSample()
@@ -174,7 +228,6 @@ class fileList(QtGui.QGraphicsScene):
         self.clean()
         self.prev_dir = self.cwd[:-1] if self.cwd else None
         self.cwd = path
-        print self.prev_dir, self.cwd
         os.chdir(path)
         self.cwd_folders, self.cwd_files = self.getContents()
         self.drawContents()
@@ -190,7 +243,6 @@ class fileList(QtGui.QGraphicsScene):
             self.addItem(entry_rect)
             self.items.append(entry_rect)
             if entry==self.prev_dir:
-                print 'yes'
                 self.parent.ensureVisible(entry_rect, xMargin=-50)
                 entry_rect.setSelected(True)
             c += 1
@@ -283,7 +335,6 @@ class pathLister(QtGui.QComboBox):
     def keyPressEvent(self, event):
         QtGui.QComboBox.keyPressEvent(self, event)
         if event.key() == QtCore.Qt.Key_Return:
-            print 'looking up', self.currentText()
             if os.path.isdir(self.currentText()):
                 self.path_updated.emit(self.currentText())
 
@@ -307,7 +358,7 @@ class mainWindow(QtGui.QTabWidget):
         self.files.setFrameShape(QtGui.QFrame.NoFrame)
 
         self.playCheck = QtGui.QCheckBox()
-        self.waveRect = QtGui.QWidget()
+        #self.waveRect = playView()
         #hBox = QtGui.QHBoxLayout()
         #hBox.addWidget(self.playCheck)
         #hBox.addWidget(self.waveRect)
