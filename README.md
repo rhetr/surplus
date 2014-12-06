@@ -13,10 +13,12 @@ USAGE
 TODO
 
 
-SHORTCUTS
----------
-* arrow keys navigate in/out of directories
-* space + enter trigger playback
+KEYBOARD SHORTCUTS
+------------------
+* left/right arrow keys navigate in/out of directories
+* up/down/home/end arrow keys navigate inside a directory
+* forward slash focuses the path (escape unfocuses it)
+* space/enter trigger playback
 
 TODO
 ----
@@ -31,13 +33,11 @@ TODO
     * default location
     * plugin paths
 * more shortcuts
-    * tab to switch between plugins/files
-    * slash to search
+    * tab to switch between plugins/files (implemented but plugin browsing isn't)
     * settings dialog ctrl+P
 * sample tagging/smart sample searching
 
 ###ui/interaction
-* remove outline from selection box
 * selection box resizes with window
 * move scrollbar to left side underneath tabs
 * touch interaction
@@ -46,9 +46,7 @@ TODO
 * figure out how to get information from plugins
 
 ###programming structure
-* use either camelCase or snake_case not both
-* use qt signals instead of setting fields
-* don't use play
+* use QListView instead of QGraphicsView 
 
 KNOWN BUGS
 ----------
