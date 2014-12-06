@@ -64,23 +64,24 @@ class playView(QtGui.QGraphicsView):
             length.microsecond * .001
 
     def loadFile(self, a_file):
-        length = self.mil(getLength(a_file))
-
         if self.path:
             self.scene.removeItem(self.path)
+            self.path = None
+        if a_file:
+            length = self.mil(getLength(a_file))
 
-        self.path = waveForm(a_file)
-        clearpen = QtGui.QPen(QtGui.QColor(50, 102, 150))
-        self.path.setPen(clearpen)
-        self.scene.addItem(self.path)
+            self.path = waveForm(a_file)
+            clearpen = QtGui.QPen(QtGui.QColor(50, 102, 150))
+            self.path.setPen(clearpen)
+            self.scene.addItem(self.path)
 
-        self.tl = QtCore.QTimeLine(length)
-        self.tl.setFrameRange(0, length/10)
-        self.a = QtGui.QGraphicsItemAnimation()
-        self.a.setItem(self.item)
-        self.a.setTimeLine(self.tl)
+            self.tl = QtCore.QTimeLine(length)
+            self.tl.setFrameRange(0, length/10)
+            self.a = QtGui.QGraphicsItemAnimation()
+            self.a.setItem(self.item)
+            self.a.setTimeLine(self.tl)
 
-        self.a.setPosAt(1, QtCore.QPointF(200, 0))
+            self.a.setPosAt(1, QtCore.QPointF(200, 0))
 
     def setWaveform(self):
         pass
@@ -98,6 +99,7 @@ class listItem(QtGui.QGraphicsRectItem):
 
         clearpen = QtGui.QPen(QtGui.QColor(0, 0, 0, 0))
         self.setPen(clearpen)
+        self.text = text
         the_text = text[:37]+'...' if len(text) > 40 else text
         the_text += '/' if not is_file else ''
         self.label = QtGui.QGraphicsSimpleTextItem(the_text, parent=self)
@@ -119,7 +121,7 @@ class listItem(QtGui.QGraphicsRectItem):
     def playSample(self):
         if self.playing:
             os.killpg(self.playing.pid, signal.SIGTERM)
-        self.playing = play(self.label.text())
+        self.playing = play(self.text)
 
     def setSelected(self, selected):
         QtGui.QGraphicsRectItem.setSelected(self, selected)
@@ -145,10 +147,10 @@ class listItem(QtGui.QGraphicsRectItem):
     def mouseMoveEvent(self, event):
         if self.is_file:
             mimeData = QtCore.QMimeData()
-            # path = os.path.abspath(str(self.label.text()))
+            # path = os.path.abspath(str(self.text))
             mimeData.setUrls(
                 [QtCore.QUrl.fromLocalFile(
-                    os.path.abspath(str(self.label.text())))])
+                    os.path.abspath(str(self.text)))])
 
             # view = self.scene().views()[0]
             # sceneP = self.mapToScene(self.boundingRect().bottomRight())
@@ -173,7 +175,7 @@ class listItem(QtGui.QGraphicsRectItem):
 
     def mouseReleaseEvent(self, event):
         if not self.is_file:
-            self.scene().changeDir(self.label.text())
+            self.scene().changeDir(self.text)
 
 
 class fileList(QtGui.QGraphicsScene):
@@ -197,7 +199,10 @@ class fileList(QtGui.QGraphicsScene):
             curr_selected = self.selectedItems()[0]
             if curr_selected.is_file and self.file_selected != curr_selected:
                 self.file_selected = curr_selected
-                self.sample_selected.emit(self.file_selected.label.text())
+                self.sample_selected.emit(self.file_selected.text)
+            elif not curr_selected.is_file:
+                self.file_selected = None
+                self.sample_selected.emit('')
         return QtGui.QGraphicsScene.event(self, event)
 
     def keyPressEvent(self, event): #NOQA
@@ -239,11 +244,11 @@ class fileList(QtGui.QGraphicsScene):
                 self.changeDir('..')
             elif event.key() == QtCore.Qt.Key_Right:
                 if not self.selectedItems()[0].is_file:
-                    # self.prev_dir = self.selectedItems()[0].label.text()
-                    self.changeDir(self.selectedItems()[0].label.text())
+                    # self.prev_dir = self.selectedItems()[0].text
+                    self.changeDir(self.selectedItems()[0].text)
             elif event.key() == QtCore.Qt.Key_Return:
                 if not self.selectedItems()[0].is_file:
-                    self.changeDir(self.selectedItems()[0].label.text())
+                    self.changeDir(self.selectedItems()[0].text)
                 else:
                     self.selectedItems()[0].playSample()
             elif event.key() == QtCore.Qt.Key_Space:
@@ -287,7 +292,7 @@ class fileList(QtGui.QGraphicsScene):
 
         if not self.selectedItems():
             self.items[1].setSelected(True)
-            #print self.items[1].label.text()
+            #print self.items[1].text
 
         rect = self.itemsBoundingRect()
         self.parent.setSceneRect(rect)
