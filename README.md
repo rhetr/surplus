@@ -10,7 +10,7 @@ plugin browsing (ladspa,dssi,lv2,vst) to come hopefully.
 
 DEPENDENCIES
 ------------
-numpy, pyqt4
+numpy, pyqt4, ffmpeg/avconv
 
 USAGE
 -----

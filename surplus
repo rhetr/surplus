@@ -12,14 +12,14 @@ from PyQt4 import QtGui, QtCore
 from peaks import *
 
 style_file = 'style.qss'
-default_audio_dir = os.path.expanduser('~')+'/audio/sounds/drum sounds/'
+default_audio_dir = os.path.expanduser('~')# +'/audio/sounds/drum sounds/'
 line_height = 25
 
 exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a']
 
 
 def getLength(a_file):
-    x = ['avconv', '-i', str(a_file)]
+    x = [FFMPEG_BIN, '-i', str(a_file)]
     try:
         output = subprocess.check_output(x, stderr=subprocess.STDOUT)
     except Exception, e:
@@ -391,10 +391,6 @@ class mainWindow(QtGui.QTabWidget):
     def __init__(self):
         QtGui.QTabWidget.__init__(self)
         # self.setAttribute(QtCore.Qt.WA_AcceptTouchEvents)
-        # self.setStyleSheet("background-color: rgb(100, 100, 100);
-        #                    margin:0px; padding: 0px;
-        #                    border: 1px solid rgb(30, 30, 30);
-        #                    color: rgb(200, 200, 200);")
         self.setWindowFlags(QtCore.Qt.Dialog)
         self.setMinimumHeight(1000)
 

@@ -35,7 +35,6 @@ class waveForm(QtGui.QGraphicsPathItem):
             self.setPath(path)
 
     def makeWave(self, audio_file):
-        print 'making waves'
         height = 10
         width = 200
         command = [ FFMPEG_BIN,
