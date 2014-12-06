@@ -7,6 +7,7 @@ import sys
 import os
 import cPickle as pickle
 from PyQt4 import QtGui, QtCore
+import datetime
 
 class Test(QtGui.QGraphicsView):
     def __init__(self):
@@ -15,24 +16,31 @@ class Test(QtGui.QGraphicsView):
         self.setScene(self.scene)
 
         audio_file = '/media/Data/audio/sounds/drum sounds/[99Sounds] 99 Drum Samples/Samples/kick-slapback.wav'
-        path = waveForm(audio_file)
+        audio_file = '/media/Data/audio/cats/Portamento Electro.m4a'
+        print os.path.exists(audio_file)
+        thread = waveThread(audio_file)
+        thread.finished.connect(self.load)
+        thread.start()
 
+    def load(self, wave):
+        path = waveForm(wave)
         self.scene.addItem(path)
 
 
-class waveForm(QtGui.QGraphicsPathItem):
-    def __init__(self, audio_file=None):
-        QtGui.QGraphicsPathItem.__init__(self)
-        if audio_file:
+class waveThread(QtCore.QThread):
+    finished = QtCore.pyqtSignal(np.ndarray)
 
-            pf = audio_file + '.pf'
-            wave = pickle.load(open(pf, 'rb')) if os.path.exists(pf) else self.makeWave(audio_file)
-            first = QtCore.QPointF(wave[1,0],wave[0,0])
-            path = QtGui.QPainterPath(first)
-            for i in range(1, wave.shape[1]):
-                path.lineTo(QtCore.QPointF(wave[1,i],wave[0,i]))
+    def __init__(self, audio_file):
+        QtCore.QThread.__init__(self)
+        self.audio_file = audio_file
 
-            self.setPath(path)
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        pf = self.audio_file + '.pf'
+        self.wave = pickle.load(open(pf, 'rb')) if os.path.exists(pf) else self.makeWave(self.audio_file)
+        self.finished.emit(self.wave)
 
     def makeWave(self, audio_file):
         height = 10
@@ -47,13 +55,34 @@ class waveForm(QtGui.QGraphicsPathItem):
         ppipe = sp.Popen(command, stdout=sp.PIPE, stderr=open(os.devnull,'wb'), bufsize=10**8)
         raw_audio = ppipe.communicate()[0]
         audio_array = np.fromstring(raw_audio, dtype="int16").astype(np.float)
+        scale = 10**(int(np.log10(audio_array.size))/2)
+        if audio_array.size > 1e6:
+            audio_array = audio_array[1::scale]
         audio_array *= (height/float(np.amax(audio_array)))
         audio_array += height
         size = audio_array.size
+        print size
         t = np.linspace(0,width,size)
         wave = np.array((audio_array,t))
         pickle.dump(wave, open(audio_file + '.pf', 'wb'), protocol=2)
+        print 'finished making wave'
         return wave
+
+
+class waveForm(QtGui.QGraphicsPathItem):
+    def __init__(self, wave=None):
+        QtGui.QGraphicsPathItem.__init__(self)
+        first = QtCore.QPointF(wave[1,0],wave[0,0])
+        s = datetime.datetime.now()
+        #x = [(wave[1,i], wave[0,i]) for i in range(1, wave.shape[1])]
+        path = QtGui.QPainterPath(first)
+        for i in range(1, wave.shape[1]):
+            path.lineTo(wave[1,i],wave[0,i])
+        x = datetime.datetime.now() - s
+        print x.seconds, x.microseconds
+
+        self.setPath(path)
+
 
 def which(program):
     import os

@@ -13,7 +13,7 @@ from peaks import *
 
 style_file = 'style.qss'
 default_audio_dir = os.path.expanduser('~')# +'/audio/sounds/drum sounds/'
-line_height = 25
+line_height = 20
 
 exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a']
 
@@ -69,22 +69,24 @@ class playView(QtGui.QGraphicsView):
             self.path = None
         if a_file:
             length = self.mil(getLength(a_file))
+            thread = waveThread(a_file)
+            thread.finished.connect(self.loadWave)
+            thread.start()
 
-            self.path = waveForm(a_file)
-            clearpen = QtGui.QPen(QtGui.QColor(50, 102, 150))
-            self.path.setPen(clearpen)
-            self.scene.addItem(self.path)
-
-            self.tl = QtCore.QTimeLine(length)
-            self.tl.setFrameRange(0, length/10)
-            self.a = QtGui.QGraphicsItemAnimation()
-            self.a.setItem(self.item)
-            self.a.setTimeLine(self.tl)
-
-            self.a.setPosAt(1, QtCore.QPointF(200, 0))
-
-    def setWaveform(self):
+    def loadWave(self, arr):
         pass
+        #self.path = waveForm(arr)
+        #clearpen = QtGui.QPen(QtGui.QColor(50, 102, 150))
+        #self.path.setPen(clearpen)
+        #self.scene.addItem(self.path)
+
+        # self.tl = QtCore.QTimeLine(length)
+        # self.tl.setFrameRange(0, length/10)
+        # self.a = QtGui.QGraphicsItemAnimation()
+        # self.a.setItem(self.item)
+        # self.a.setTimeLine(self.tl)
+
+        # self.a.setPosAt(1, QtCore.QPointF(200, 0))
 
     def animate(self):
         self.tl.start()
@@ -380,6 +382,7 @@ class pathLister(QtGui.QComboBox):
         if event.key() == QtCore.Qt.Key_Return:
             if os.path.isdir(self.currentText()):
                 self.path_updated.emit(self.currentText())
+                self.esc_pressed.emit()
 
     def focusInEvent(self, event):
         self.prev_text = self.currentText()
