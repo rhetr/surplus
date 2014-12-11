@@ -52,6 +52,8 @@ TODO
 ###programming structure
 * use QListView instead of QGraphicsView 
 
-KNOWN BUGS
-----------
+KNOWN ISSUES
+------------
 * select box behavior resets if you unfocus&refocus window
+* waveforms take a while to load and slow down everything
+* peak files are big
