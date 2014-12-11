@@ -395,7 +395,6 @@ class mainWindow(QtGui.QTabWidget):
         QtGui.QTabWidget.__init__(self)
         # self.setAttribute(QtCore.Qt.WA_AcceptTouchEvents)
         self.setWindowFlags(QtCore.Qt.Dialog)
-        self.setMinimumHeight(1000)
 
         self.tab1 = QtGui.QWidget()
         self.filePath = pathLister()
