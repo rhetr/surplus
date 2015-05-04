@@ -44,7 +44,7 @@ class waveThread(QtCore.QThread):
 
     def makeWave(self, audio_file):
         height = 10
-        width = 200
+        width = 120
         command = [ FFMPEG_BIN,
                 '-i', audio_file,
                 '-f', 's16le',
