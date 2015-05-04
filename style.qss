@@ -1,5 +1,8 @@
+/* vim:filetype=css
+*/
+
 mainWindow {
-    background-color: rgb(50,50,50);
+    background-color: #111;
 }
 
 mainWindow:pane {
@@ -18,18 +21,33 @@ QTabBar::tab {
 }
 
 QTabBar::tab:selected {
-    background: rgb(50,50,50);
+    background: #111;
     color: rgb(90,132,200);
 }
 
 pathLister {
-    background: rgb(190,190,190);
+    background: #000;
     border-radius:0px;
+    color: white;
+    padding: 2px 0px 2px 0px;
 }
 
 pathLister::drop-down {
-    padding: 0px;
+    padding: 0;
     width:0;
     border-style: none;
 }
 
+fileList {
+    background-color: #111;
+    color: #aaa;
+    border-radius: 0px;
+}
+
+fileList::item {
+    /*padding-bottpom:3px;  why isn't this fucking working */
+}
+
+fileList::item:selected {
+    background-color: rgb(50,102,150);
+}
