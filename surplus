@@ -227,10 +227,9 @@ class pathLister(QtGui.QComboBox):
     esc_pressed = QtCore.pyqtSignal()
 
     def __init__(self):
-        QtGui.QLineEdit.__init__(self)
+        QtGui.QComboBox.__init__(self)
         self.setEditable(True)
         self.addItems(config['Places'])
-        self.addItems(config['Recent'])
         self.activated.connect(self.updatePath)
 
     def updatePath(self, index):
@@ -347,11 +346,11 @@ class mainWindow(QtGui.QWidget):
     #    return QtGui.QTabWidget.event(self, event)
 
 
-    def switchTabs(self): self.setCurrentIndex((self.currentIndex()+1) % self.count())
+    def switchTabs(self): self.tabWidget.setCurrentIndex((self.currentIndex()+1) % self.count())
 
-    def focusList(self): self.currentWidget().focusNextChild()
+    def focusList(self): self.files.setFocus(QtCore.Qt.ShortcutFocusReason)
 
-    def focusPath(self): self.currentWidget().focusPreviousChild()
+    def focusPath(self): self.filePath.setFocus(QtCore.Qt.ShortcutFocusReason)
 
     def updatePath(self, text): self.filePath.setEditText(text)
 
