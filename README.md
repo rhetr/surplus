@@ -20,10 +20,9 @@ TODO
 
 KEYBOARD SHORTCUTS
 ------------------
-* left/right arrow keys navigate in/out of directories
-* up/down/home/end arrow keys navigate inside a directory
+* use arrow keys or jkl; (vim-style) to navigate
 * forward slash focuses the path (escape unfocuses it)
-* space/enter trigger playback
+* space/enter triggers playback
 
 TODO
 ----
@@ -39,7 +38,7 @@ TODO
     * default location
     * plugin paths
 * more shortcuts
-    * tab to switch between plugins/files (implemented but plugin browsing isn't)
+    * tab to switch between plugins/files
     * settings dialog ctrl+P
 * sample tagging/smart sample searching
 
@@ -51,11 +50,8 @@ TODO
 ###plugins
 * figure out how to get information from plugins
 
-###programming structure
-* use QListView instead of QGraphicsView 
-
 KNOWN ISSUES
 ------------
-* select box behavior resets if you unfocus&refocus window
+* if you use the arrow keys down to a file and then click it, it doesn't trigger the first time
 * waveforms take a while to load and slow down everything
 * peak files are big

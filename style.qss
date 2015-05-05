@@ -2,7 +2,9 @@
 */
 
 mainWindow {
-    background-color: #111;
+    background-color: #222;
+    width:200px;
+    height:500px;
 }
 
 mainWindow:pane {

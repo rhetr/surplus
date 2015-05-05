@@ -45,18 +45,24 @@ class playView(QtGui.QGraphicsView):
     def __init__(self):
         QtGui.QGraphicsView.__init__(self)
         self.setBackgroundBrush(QtGui.QColor(34, 34, 34))
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 
-        clearpen = QtGui.QPen(QtGui.QColor(0, 0, 0, 0))
 
         self.scene = QtGui.QGraphicsScene(self)
         self.item = QtGui.QGraphicsLineItem(0, 0, 0, 20)
         self.rect = QtGui.QGraphicsRectItem(0, 0, 100, 20)
-        self.rect.setPen(clearpen)
-        self.path = None
+        self.rect.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0, 0)))
         self.scene.addItem(self.item)
         self.scene.addItem(self.rect)
         self.setScene(self.scene)
         self.setAlignment(QtCore.Qt.AlignLeft)
+
+        self.path = None
+
+    def resizeEvent(self, event):
+        self.fitInView(self.rect)
+        QtGui.QGraphicsView.resizeEvent(self, event)
 
     def mil(self, length):
         return length.hour*3.6e6 + \
@@ -100,6 +106,7 @@ class listItem(QtGui.QListWidgetItem):
         self.text += '/' if not is_file else ''
         self.setText(self.text)
         self.currentItem = None
+        self.prevItem = 0
         self.playing = None
 
     def playSample(self):
@@ -108,8 +115,8 @@ class listItem(QtGui.QListWidgetItem):
         self.playing = play(self.text)
 
 class fileList(QtGui.QListWidget):
-#    tab_pressed = QtCore.pyqtSignal()
-#    slash_pressed = QtCore.pyqtSignal()
+    tab_pressed = QtCore.pyqtSignal()
+    slash_pressed = QtCore.pyqtSignal()
     path_updated = QtCore.pyqtSignal(str)
     sample_playing = QtCore.pyqtSignal(bool)
     sample_selected = QtCore.pyqtSignal(str)
@@ -118,80 +125,64 @@ class fileList(QtGui.QListWidget):
         QtGui.QListWidget.__init__(self, parent)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.parent = parent
         self.setDragDropMode(QtGui.QAbstractItemView.DragOnly)
-        #self.setBackgroundBrush(QtGui.QColor(50, 50, 50))
+        self.parent = parent
 
-        self.items = []
-        self.cwd = None
+        self.currentItem = None
+        self.select_flag = False
         self.changeDir(path)
-        self.file_selected = None
-        self.currentRowChanged.connect(self.activateItem)
-        self.itemClicked.connect(self.activatePressed)
-        #self.itemActivated.connect(self.activateItem)
-        #self.currentItemChanged.connect(self.poop)
 
-    def event(self, event):
-        if self.selectedItems():
-            curr_selected = self.selectedItems()[0]
-            if curr_selected.is_file and self.file_selected != curr_selected:
-                self.file_selected = curr_selected
-                self.sample_selected.emit(self.file_selected.text)
-            elif not curr_selected.is_file:
-                self.file_selected = None
-                self.sample_selected.emit('')
-        return QtGui.QListWidget.event(self, event)
+        self.currentRowChanged.connect(self.itemSelected)
+        self.itemClicked.connect(self.activatePressed)
 
     def mimeData(self, item):
         mimeData = QtCore.QMimeData()
         mimeData.setUrls( [QtCore.QUrl.fromLocalFile( os.path.abspath(str(item[0].text)))])
         return mimeData
 
-        #return mimeData
-    #def mouseMoveEvent(self, event):
-    #    if self.currentItem and self.currentItem.is_file:
-    #        mimeData = QtCore.QMimeData()
-    #        # path = os.path.abspath(str(self.text))
-    #        mimeData.setUrls(
-    #            [QtCore.QUrl.fromLocalFile(
-    #                os.path.abspath(str(self.currentItem.text)))])
-    #        drag = QtGui.QDrag(event.widget())
-    #        drag.setMimeData(mimeData)
-    #        # drag.setPixmap(pixmap)
-    #        # drag.setHotSpot(event.widget().pos())
-    #        drag.exec_(QtCore.Qt.CopyAction)
-
-
     def keyPressEvent(self, event): #NOQA
         if type(event) == QtGui.QKeyEvent:
-            if event.key() == QtCore.Qt.Key_Left:
+            #if event.key() == QtCore.Qt.Key_Tab: #not working
+            #    self.tab_pressed.emit()
+            #    return 1
+            if event.key() == QtCore.Qt.Key_Slash:
+                self.slash_pressed.emit()
+            elif event.key() == QtCore.Qt.Key_K:
+                event = QtGui.QKeyEvent(event.type(), QtCore.Qt.Key_Down, QtCore.Qt.NoModifier)
+            elif event.key() == QtCore.Qt.Key_L:
+                event = QtGui.QKeyEvent(event.type(), QtCore.Qt.Key_Up, QtCore.Qt.NoModifier)
+            elif event.key() == QtCore.Qt.Key_Left \
+                    or event.key() == QtCore.Qt.Key_J:
                 self.changeDir('..')
-            elif event.key() == QtCore.Qt.Key_Right:
+            elif event.key() == QtCore.Qt.Key_Right \
+                    or event.key() == QtCore.Qt.Key_Semicolon:
                 if not self.currentItem.is_file:
                     self.changeDir(self.selectedItems()[0].text)
-            elif event.key() == QtCore.Qt.Key_Return:
-                if not self.currentItem.is_file: self.currentItem.playSample()
-                else: self.changeDir(self.currentItem.text)
-            elif event.key() == QtCore.Qt.Key_Space:
+            elif event.key() == QtCore.Qt.Key_Return \
+                    or event.key() == QtCore.Qt.Key_Space:
                 if self.currentItem.is_file: self.currentItem.playSample()
+                else: self.changeDir(self.currentItem.text)
         QtGui.QListWidget.keyPressEvent(self, event)
 
     def clean(self):
         self.clear()
-        #if self.items:
-        #    for item in self.items:
-        #        self.removeItemWidget(item)
 
-    def activateItem(self, row):
+    def itemSelected(self, row):
         self.currentItem = self.item(row)
-        if self.currentItem and self.currentItem.is_file: self.currentItem.playSample()
+        if self.currentItem and self.currentItem.is_file:
+            self.sample_selected.emit(self.currentItem.text)
+            self.currentItem.playSample()
+        self.select_flag = True
 
     def activatePressed(self, item):
-        if self.currentItem and not self.currentItem.is_file: self.changeDir(self.currentItem.text)
+        if self.select_flag:
+            self.select_flag = False
+        elif self.currentItem:
+            if self.currentItem.is_file: self.currentItem.playSample()
+            else: self.changeDir(self.currentItem.text)
         
     def changeDir(self, path):
         self.clean()
-        self.cwd = path
         os.chdir(path)
         self.cwd_folders, self.cwd_files = self.getContents()
         self.drawContents()
@@ -199,21 +190,16 @@ class fileList(QtGui.QListWidget):
 
     def drawContents(self):
         # view = self.views() if self.views() else self.parent
-        pass
-        self.items = []
         for entry in self.cwd_folders:
-            entry_rect = listItem(entry, False)
-            #entry_rect.setPos(0, line_height+c*line_height)
-            self.addItem(entry_rect)
-            self.items.append(entry_rect)
+            entry_item = listItem(entry, False)
+            self.addItem(entry_item)
         for entry in self.cwd_files:
-            entry_rect = listItem(entry, True)
-            #entry_rect.setPos(0, line_height+c*line_height)
-            self.addItem(entry_rect)
-            self.items.append(entry_rect)
+            entry_item = listItem(entry, True)
+            self.addItem(entry_item)
 
         if not self.selectedItems():
             self.setCurrentRow(1)
+            self.currentItem = self.item(1)
 
     def isAudio(self, a_file):
         if os.path.splitext(a_file)[1].lower()[1:] in exts:
@@ -324,12 +310,8 @@ class mainWindow(QtGui.QTabWidget):
         self.setWindowTitle('Surplus')
         self.files.setFocus()
 
-        # connections
-        # self.playCheck.stateChanged.connect(
-
-
-        #self.files.tab_pressed.connect(self.switchTabs)
-        #self.files.slash_pressed.connect(self.focusPath)
+        self.files.tab_pressed.connect(self.switchTabs)
+        self.files.slash_pressed.connect(self.focusPath)
         self.filePath.tab_pressed.connect(self.switchTabs)
         self.filePath.esc_pressed.connect(self.focusList)
 
@@ -338,6 +320,14 @@ class mainWindow(QtGui.QTabWidget):
         self.files.path_updated.emit(default_audio_dir)
 
         self.files.sample_selected.connect(self.waveRect.loadFile)
+
+
+    #def event(self, event):
+    #    if type(event) == QtGui.QKeyEvent:
+    #        if event.key() == QtCore.Qt.Key_Tab: #not working
+    #            print self.focusWidget()
+    #    return QtGui.QTabWidget.event(self, event)
+
 
     def switchTabs(self): self.setCurrentIndex((self.currentIndex()+1) % self.count())
 
