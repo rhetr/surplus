@@ -105,8 +105,7 @@ class listItem(QtGui.QListWidgetItem):
         self.text = text
         self.text += '/' if not is_file else ''
         self.setText(self.text)
-        self.currentItem = None
-        self.prevItem = 0
+        self.current_item = None
         self.playing = None
 
     def playSample(self):
@@ -128,7 +127,8 @@ class fileList(QtGui.QListWidget):
         self.setDragDropMode(QtGui.QAbstractItemView.DragOnly)
         self.parent = parent
 
-        self.currentItem = None
+        self.playback_enabled = False
+        self.current_item = None
         self.select_flag = False
         self.changeDir(path)
 
@@ -156,33 +156,30 @@ class fileList(QtGui.QListWidget):
                 self.changeDir('..')
             elif event.key() == QtCore.Qt.Key_Right \
                     or event.key() == QtCore.Qt.Key_Semicolon:
-                if not self.currentItem.is_file:
+                if not self.current_item.is_file:
                     self.changeDir(self.selectedItems()[0].text)
             elif event.key() == QtCore.Qt.Key_Return \
                     or event.key() == QtCore.Qt.Key_Space:
-                if self.currentItem.is_file: self.currentItem.playSample()
-                else: self.changeDir(self.currentItem.text)
+                if self.current_item.is_file: self.current_item.playSample()
+                else: self.changeDir(self.current_item.text)
         QtGui.QListWidget.keyPressEvent(self, event)
 
-    def clean(self):
-        self.clear()
-
     def itemSelected(self, row):
-        self.currentItem = self.item(row)
-        if self.currentItem and self.currentItem.is_file:
-            self.sample_selected.emit(self.currentItem.text)
-            self.currentItem.playSample()
+        self.current_item = self.item(row)
+        if self.current_item and self.current_item.is_file:
+            self.sample_selected.emit(self.current_item.text)
+            if self.playback_enabled: self.current_item.playSample()
         self.select_flag = True
 
     def activatePressed(self, item):
         if self.select_flag:
             self.select_flag = False
-        elif self.currentItem:
-            if self.currentItem.is_file: self.currentItem.playSample()
-            else: self.changeDir(self.currentItem.text)
+        elif self.current_item:
+            if self.current_item.is_file and self.playback_enabled: self.current_item.playSample()
+            else: self.changeDir(self.current_item.text)
         
     def changeDir(self, path):
-        self.clean()
+        self.clear()
         os.chdir(path)
         self.cwd_folders, self.cwd_files = self.getContents()
         self.drawContents()
@@ -199,7 +196,7 @@ class fileList(QtGui.QListWidget):
 
         if not self.selectedItems():
             self.setCurrentRow(1)
-            self.currentItem = self.item(1)
+            self.current_item = self.item(1)
 
     def isAudio(self, a_file):
         if os.path.splitext(a_file)[1].lower()[1:] in exts:
@@ -221,6 +218,9 @@ class fileList(QtGui.QListWidget):
         file_list.sort(key=str.lower)
 
         return dir_list, file_list
+
+    def enablePlayback(self, state):
+        self.playback_enabled = state
 
 # remnants of the qgraphicsview
 #    # def paint(self, painter, option, widget=None):
@@ -267,7 +267,6 @@ class mainWindow(QtGui.QTabWidget):
         self.tab1 = QtGui.QWidget()
         self.filePath = pathLister()
         self.filePath.setFrame(QtGui.QFrame.NoFrame)
-        #self.files = fileBrowser(default_audio_dir)
         self.files = fileList(default_audio_dir)
         #self.files.setFrameShape(QtGui.QFrame.NoFrame)
 
@@ -291,7 +290,6 @@ class mainWindow(QtGui.QTabWidget):
         self.tab2 = QtGui.QWidget()
         # self.pluginSearch = QtGui.QLineEdit()
         # self.pluginSearch.setText('search...')
-        # self.files1 = fileBrowser(default_audio_dir)
         # self.files1.setFrameShape(QtGui.QFrame.NoFrame)
 
         # tab2Layout = QtGui.QVBoxLayout()
@@ -308,7 +306,6 @@ class mainWindow(QtGui.QTabWidget):
         self.setIconSize(QtCore.QSize(35, 35))
 
         self.setWindowTitle('Surplus')
-        self.files.setFocus()
 
         self.files.tab_pressed.connect(self.switchTabs)
         self.files.slash_pressed.connect(self.focusPath)
@@ -320,6 +317,11 @@ class mainWindow(QtGui.QTabWidget):
         self.files.path_updated.emit(default_audio_dir)
 
         self.files.sample_selected.connect(self.waveRect.loadFile)
+        self.playCheck.stateChanged.connect(self.files.enablePlayback)
+
+        self.playCheck.setChecked(True)
+        self.playCheck.stateChanged.emit(QtCore.Qt.Checked)
+        self.files.setFocus()
 
 
     #def event(self, event):

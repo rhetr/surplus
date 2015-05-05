@@ -15,7 +15,7 @@ numpy, pyqt4, ffmpeg/avconv, sox
 
 USAGE
 -----
-TODO
+* checkbox to disable/enable playback
 
 
 KEYBOARD SHORTCUTS
@@ -26,11 +26,6 @@ KEYBOARD SHORTCUTS
 
 TODO
 ----
-###sample interaction
-* checkbox to disable/enable playback
-* show waveform
-* scrolling through long samples
-
 ###usability
 * make favorites (favoriting directories as well as files and plugins)
 * make "recently used"
@@ -43,7 +38,6 @@ TODO
 * sample tagging/smart sample searching
 
 ###ui/interaction
-* selection box resizes with window
 * move scrollbar to left side underneath tabs
 * touch interaction
 
