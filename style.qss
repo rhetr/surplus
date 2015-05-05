@@ -2,18 +2,32 @@
 */
 
 mainWindow {
+    padding: 0;
+    margin: 0;
     background-color: #222;
     width:200px;
-    height:500px;
 }
 
-mainWindow:pane {
+QTabWidget {
+    padding: 0;
+    margin: 0;
+    border: 0;
+    height:480px;
+    width:200px;
+}
+
+QTabWidget::pane {
     border: none;
+    margin: 0;
 }
 
-mainWindow::tab-bar {
-    top: 25px;
+QTabWidget::tab-bar {
+    background-color:red;
+    float:right;
+    margin: 0px;
+    padding: 0px;
 }
+
 
 QTabBar::tab {
     background: rgb(150,150,150);
@@ -28,16 +42,14 @@ QTabBar::tab:selected {
 }
 
 pathLister {
-    background: #000;
+    width: 100%;
+    background: #555;
     border-radius:0px;
     color: white;
-    padding: 2px 0px 2px 0px;
 }
 
 pathLister::drop-down {
-    padding: 0;
-    width:0;
-    border-style: none;
+    border:1px solid #aaa;
 }
 
 fileList {
@@ -46,10 +58,7 @@ fileList {
     border-radius: 0px;
 }
 
-fileList::item {
-    /*padding-bottpom:3px;  why isn't this fucking working */
-}
-
 fileList::item:selected {
     background-color: rgb(50,102,150);
 }
+

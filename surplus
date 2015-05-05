@@ -13,10 +13,11 @@ from PyQt4 import QtGui, QtCore
 from peaks import *
 
 style_file = 'style.qss'
-default_audio_dir = os.path.expanduser('~') #+ '/audio/sounds/drum sounds/'
+default_audio_dir = os.path.expanduser('~') + '/audio/sounds/drum sounds/'
 line_height = 20
 
 exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a']
+places = [default_audio_dir, os.path.expanduser('~'), '/home/duke/audio/presets']
 
 
 def getLength(a_file):
@@ -50,10 +51,10 @@ class playView(QtGui.QGraphicsView):
 
 
         self.scene = QtGui.QGraphicsScene(self)
-        self.item = QtGui.QGraphicsLineItem(0, 0, 0, 20)
+        #self.item = QtGui.QGraphicsLineItem(0, 0, 0, 20)
         self.rect = QtGui.QGraphicsRectItem(0, 0, 100, 20)
         self.rect.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0, 0)))
-        self.scene.addItem(self.item)
+        #self.scene.addItem(self.item)
         self.scene.addItem(self.rect)
         self.setScene(self.scene)
         self.setAlignment(QtCore.Qt.AlignLeft)
@@ -234,6 +235,11 @@ class pathLister(QtGui.QComboBox):
     def __init__(self):
         QtGui.QLineEdit.__init__(self)
         self.setEditable(True)
+        self.addItems(places)
+        self.activated.connect(self.updatePath)
+
+    def updatePath(self, index):
+        self.path_updated.emit(self.currentText())
 
     def event(self, event):
         if event.type() == QtCore.QEvent.KeyPress:
@@ -257,12 +263,19 @@ class pathLister(QtGui.QComboBox):
         self.prev_text = self.currentText()
         QtGui.QComboBox.focusInEvent(self, event)
 
-class mainWindow(QtGui.QTabWidget):
+class mainWindow(QtGui.QWidget):
 
     def __init__(self):
-        QtGui.QTabWidget.__init__(self)
+        QtGui.QWidget.__init__(self)
         # self.setAttribute(QtCore.Qt.WA_AcceptTouchEvents)
         self.setWindowFlags(QtCore.Qt.Dialog)
+
+        self.tabWidget = QtGui.QTabWidget()
+        #self.tabBar = QtGui.QTabBar()
+        #self.tabWidget.setTabBar(self.tabBar)
+        self.tabWidget.setTabPosition(QtGui.QTabWidget.West)
+        self.tabWidget.setTabIcon(0, QtGui.QIcon.fromTheme("edit-undo"))
+        self.tabWidget.setIconSize(QtCore.QSize(35, 35))
 
         self.tab1 = QtGui.QWidget()
         self.filePath = pathLister()
@@ -270,9 +283,20 @@ class mainWindow(QtGui.QTabWidget):
         self.files = fileList(default_audio_dir)
         #self.files.setFrameShape(QtGui.QFrame.NoFrame)
 
+        #mainHBox = QtGui.QHBoxLayout()
+        #mainHBox.addWidget(self.tabBar)
+        #mainHBox.addWidget(self.tabWidget)
+
+        mainVBox = QtGui.QVBoxLayout()
+        mainVBox.addWidget(self.filePath)
+        mainVBox.addWidget(self.tabWidget)
+        #mainVBox.addLayout(mainHBox)
+        self.setLayout(mainVBox)
+
+
         self.playCheck = QtGui.QCheckBox()
         self.waveRect = playView()
-        self.waveRect.setMaximumHeight(50)
+        self.waveRect.setMaximumHeight(20)
         self.waveRect.setFrameShape(QtGui.QFrame.NoFrame)
         hBox = QtGui.QHBoxLayout()
         hBox.addWidget(self.playCheck)
@@ -282,7 +306,7 @@ class mainWindow(QtGui.QTabWidget):
         tab1Layout.setSpacing(0)
         tab1Layout.setMargin(0)
         tab1Layout.setContentsMargins(0, 0, 0, 0)
-        tab1Layout.addWidget(self.filePath)
+        #tab1Layout.addWidget(self.filePath)
         tab1Layout.addWidget(self.files)
         tab1Layout.addLayout(hBox)
         self.tab1.setLayout(tab1Layout)
@@ -299,11 +323,8 @@ class mainWindow(QtGui.QTabWidget):
         # tab2Layout.addWidget(self.files1)
         # self.tab2.setLayout(tab2Layout)
 
-        self.addTab(self.tab1, "browser")
-        self.addTab(self.tab2, "plugins")
-        self.setTabPosition(QtGui.QTabWidget.West)
-        self.setTabIcon(0, QtGui.QIcon.fromTheme("edit-undo"))
-        self.setIconSize(QtCore.QSize(35, 35))
+        self.tabWidget.addTab(self.tab1, "browser")
+        self.tabWidget.addTab(self.tab2, "plugins")
 
         self.setWindowTitle('Surplus')
 
@@ -353,8 +374,8 @@ if __name__ == '__main__':
     stylesheet = QtCore.QLatin1String(content)
     app.setStyleSheet(stylesheet)
 
-    tabs = mainWindow()
+    main = mainWindow()
 
-    tabs.show()
+    main.show()
     sys.exit(app.exec_())
     subprocess.call(['pkill', 'play'])
