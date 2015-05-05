@@ -12,6 +12,18 @@ from PyQt4 import QtGui, QtCore
 from peaks import *
 from config import *
 
+def handler(*args):
+    '''saves the config and kills play before exiting'''
+    subprocess.call(['pkill', 'play'])
+    print 'caught exit signal'
+    if not config:
+        print 'error, config not saved'
+    else:
+        print 'saving config'
+        with open(config_file, 'wb') as config_file_settings:
+            yaml.dump(config, config_file_settings)
+    print 'exiting'
+    sys.exit(0)
 
 def getLength(a_file):
     x = [FFMPEG_BIN, '-i', str(a_file)]
@@ -130,8 +142,11 @@ class fileList(QtGui.QListWidget):
         self.itemClicked.connect(self.activatePressed)
 
     def mimeData(self, item):
+        path = os.path.abspath(str(item[0].text))
         mimeData = QtCore.QMimeData()
-        mimeData.setUrls( [QtCore.QUrl.fromLocalFile( os.path.abspath(str(item[0].text)))])
+        mimeData.setUrls([QtCore.QUrl.fromLocalFile(path)])
+        config['Recent'].append(path)
+        if len(config['Recent']) > 50: config['Recent'].pop(0)
         return mimeData
 
     def keyPressEvent(self, event): #NOQA
@@ -141,6 +156,8 @@ class fileList(QtGui.QListWidget):
             #    return 1
             if event.key() == QtCore.Qt.Key_Slash:
                 self.slash_pressed.emit()
+            elif event.key() == QtCore.Qt.Key_Escape:
+                self.changeDir(os.getcwd())
             elif event.key() == QtCore.Qt.Key_K:
                 event = QtGui.QKeyEvent(event.type(), QtCore.Qt.Key_Down, QtCore.Qt.NoModifier)
             elif event.key() == QtCore.Qt.Key_L:
@@ -174,13 +191,18 @@ class fileList(QtGui.QListWidget):
         
     def changeDir(self, path):
         self.clear()
-        os.chdir(path)
-        self.cwd_folders, self.cwd_files = self.getContents()
-        self.drawContents()
-        self.path_updated.emit(os.getcwd())
+        if path == "Recent": #TODO: press escape or 
+            self.cwd_folders = ['..']
+            self.cwd_files = config['Recent'][::-1]
+            self.drawContents()
+            self.path_updated.emit('Recent')
+        else:
+            os.chdir(path)
+            self.cwd_folders, self.cwd_files = self.getContents()
+            self.drawContents()
+            self.path_updated.emit(os.getcwd())
 
     def drawContents(self):
-        # view = self.views() if self.views() else self.parent
         for entry in self.cwd_folders:
             entry_item = listItem(entry, False)
             self.addItem(entry_item)
@@ -230,6 +252,7 @@ class pathLister(QtGui.QComboBox):
         QtGui.QComboBox.__init__(self)
         self.setEditable(True)
         self.addItems(config['Places'])
+        self.addItem('Recent')
         self.activated.connect(self.updatePath)
 
     def updatePath(self, index):
@@ -361,15 +384,20 @@ class mainWindow(QtGui.QWidget):
     #         print 'ok'
 
 if __name__ == '__main__':
+    for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
+        signal.signal(sig, handler)
     app = QtGui.QApplication(sys.argv)
 
     with open(config['Stylesheet'], 'r') as content_file:
         content = content_file.read()
     stylesheet = QtCore.QLatin1String(content)
     app.setStyleSheet(stylesheet)
+    app.aboutToQuit.connect(handler)
 
     main = mainWindow()
-
     main.show()
+
+    timer = QtCore.QTimer()
+    timer.start(500)
+    timer.timeout.connect(lambda: None)
     sys.exit(app.exec_())
-    subprocess.call(['pkill', 'play'])

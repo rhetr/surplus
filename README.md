@@ -29,12 +29,12 @@ TODO
 ----
 ###usability
 * make favorites (favoriting directories as well as files and plugins)
-* make "recently used"
 * config file
     * plugin paths
 * more shortcuts
     * tab to switch between plugins/files
     * settings dialog ctrl+P
+    * make shortcut for recently used
 * sample tagging/smart sample searching
 
 ###ui/interaction
