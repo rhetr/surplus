@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #filename: peaks.py
 
 import subprocess as sp

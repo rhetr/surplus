@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 '''
 surplus
@@ -8,16 +8,9 @@ import os
 import subprocess
 import signal
 import datetime
-from multiprocessing import Process, Queue
 from PyQt4 import QtGui, QtCore
 from peaks import *
-
-style_file = 'style.qss'
-default_audio_dir = os.path.expanduser('~') + '/audio/sounds/drum sounds/'
-line_height = 20
-
-exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a']
-places = [default_audio_dir, os.path.expanduser('~'), '/home/duke/audio/presets']
+from config import *
 
 
 def getLength(a_file):
@@ -200,6 +193,7 @@ class fileList(QtGui.QListWidget):
             self.current_item = self.item(1)
 
     def isAudio(self, a_file):
+        exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a']
         if os.path.splitext(a_file)[1].lower()[1:] in exts:
             return True
         return False
@@ -235,7 +229,8 @@ class pathLister(QtGui.QComboBox):
     def __init__(self):
         QtGui.QLineEdit.__init__(self)
         self.setEditable(True)
-        self.addItems(places)
+        self.addItems(config['Places'])
+        self.addItems(config['Recent'])
         self.activated.connect(self.updatePath)
 
     def updatePath(self, index):
@@ -280,7 +275,7 @@ class mainWindow(QtGui.QWidget):
         self.tab1 = QtGui.QWidget()
         self.filePath = pathLister()
         self.filePath.setFrame(QtGui.QFrame.NoFrame)
-        self.files = fileList(default_audio_dir)
+        self.files = fileList(config['Default Folder'])
         #self.files.setFrameShape(QtGui.QFrame.NoFrame)
 
         #mainHBox = QtGui.QHBoxLayout()
@@ -335,7 +330,7 @@ class mainWindow(QtGui.QWidget):
 
         self.files.path_updated.connect(self.updatePath)
         self.filePath.path_updated.connect(self.updateList)
-        self.files.path_updated.emit(default_audio_dir)
+        self.files.path_updated.emit(config['Default Folder'])
 
         self.files.sample_selected.connect(self.waveRect.loadFile)
         self.playCheck.stateChanged.connect(self.files.enablePlayback)
@@ -369,7 +364,7 @@ class mainWindow(QtGui.QWidget):
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
 
-    with open(style_file, 'r') as content_file:
+    with open(config['Stylesheet'], 'r') as content_file:
         content = content_file.read()
     stylesheet = QtCore.QLatin1String(content)
     app.setStyleSheet(stylesheet)

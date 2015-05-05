@@ -11,11 +11,12 @@ plugin browsing (ladspa,dssi,lv2,vst) to come hopefully.
 
 DEPENDENCIES
 ------------
-numpy, pyqt4, ffmpeg/avconv, sox
+numpy, pyqt4, ffmpeg/avconv, sox, yaml
 
 USAGE
 -----
 * checkbox to disable/enable playback
+* config file in $HOME/.config/surplus/config
 
 
 KEYBOARD SHORTCUTS
@@ -29,8 +30,7 @@ TODO
 ###usability
 * make favorites (favoriting directories as well as files and plugins)
 * make "recently used"
-* settings dialogue
-    * default location
+* config file
     * plugin paths
 * more shortcuts
     * tab to switch between plugins/files
