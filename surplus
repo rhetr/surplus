@@ -141,12 +141,16 @@ class fileList(QtGui.QListWidget):
         self.currentRowChanged.connect(self.itemSelected)
         self.itemClicked.connect(self.activatePressed)
 
+    def updateRecent(self, path):
+        if path in config['Recent']: config['Recent'].remove(path)
+        config['Recent'].append(path)
+        if len(config['Recent']) > 50: config['Recent'].pop(0)
+
     def mimeData(self, item):
         path = os.path.abspath(str(item[0].text))
         mimeData = QtCore.QMimeData()
         mimeData.setUrls([QtCore.QUrl.fromLocalFile(path)])
-        config['Recent'].append(path)
-        if len(config['Recent']) > 50: config['Recent'].pop(0)
+        self.updateRecent(path)
         return mimeData
 
     def keyPressEvent(self, event): #NOQA
