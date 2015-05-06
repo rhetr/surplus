@@ -28,6 +28,7 @@ KEYBOARD SHORTCUTS
 TODO
 ----
 ###usability
+* make a proper install script
 * make favorites (favoriting directories as well as files and plugins)
 * config file
     * plugin paths
