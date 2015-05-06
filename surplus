@@ -290,30 +290,60 @@ class mainWindow(QtGui.QWidget):
         QtGui.QWidget.__init__(self)
         # self.setAttribute(QtCore.Qt.WA_AcceptTouchEvents)
         self.setWindowFlags(QtCore.Qt.Dialog)
+        self.setWindowTitle('Surplus')
 
-        self.tabWidget = QtGui.QTabWidget()
-        #self.tabBar = QtGui.QTabBar()
-        #self.tabWidget.setTabBar(self.tabBar)
-        self.tabWidget.setTabPosition(QtGui.QTabWidget.West)
-        self.tabWidget.setTabIcon(0, QtGui.QIcon.fromTheme("edit-undo"))
-        self.tabWidget.setIconSize(QtCore.QSize(35, 35))
+        self._initWidgets()
+        self._initFilesTab()
+        self._initPluginsTab()
+        self._initMainLayout()
 
+        self.addTab(self.tab1, "browser")
+        self.addTab(self.tab2, "plugins")
+
+        self._initConnections()
+        self.files.setFocus()
+
+    def _initWidgets(self):
+        self.widgetStack = QtGui.QStackedWidget()
+
+        self.tabBar = QtGui.QTabBar()
+        self.tabBar.currentChanged.connect(self.widgetStack.setCurrentIndex)
+        self.tabBar.setShape(QtGui.QTabBar.RoundedWest)
+        self.tabBar.updateGeometry()
+        
+        self.scrollBar = QtGui.QScrollBar()
+        self.scrollBar.rangeChanged.connect(self.scrollHide)
+        self.blank = QtGui.QWidget()
+        self.blank.hide()
+
+        self.tabLayoutBox = QtGui.QVBoxLayout()
+        self.tabLayoutBox.setContentsMargins(0,0,0,0)
+        self.tabLayoutBox.setSpacing(0)
+        self.tabLayoutBox.setMargin(0)
+        self.tabLayoutBox.setAlignment(QtCore.Qt.AlignLeft)
+        self.tabLayoutBox.addWidget(self.tabBar)
+        self.tabLayoutBox.addWidget(self.scrollBar)
+        self.tabLayoutBox.addWidget(self.blank)
+
+    def _initMainLayout(self):
+        mainHBox = QtGui.QHBoxLayout()
+        mainHBox.setContentsMargins(0,0,0,0)
+        mainHBox.setMargin(0)
+        mainHBox.setSpacing(0)
+        mainHBox.addLayout(self.tabLayoutBox)
+        mainHBox.addWidget(self.widgetStack)
+
+        mainVBox = QtGui.QVBoxLayout()
+        mainVBox.addWidget(self.filePath)
+        mainVBox.addLayout(mainHBox)
+        self.setLayout(mainVBox)
+
+    def _initFilesTab(self):
         self.tab1 = QtGui.QWidget()
         self.filePath = pathLister()
         self.filePath.setFrame(QtGui.QFrame.NoFrame)
         self.files = fileList(config['Default Folder'])
-        #self.files.setFrameShape(QtGui.QFrame.NoFrame)
-
-        #mainHBox = QtGui.QHBoxLayout()
-        #mainHBox.addWidget(self.tabBar)
-        #mainHBox.addWidget(self.tabWidget)
-
-        mainVBox = QtGui.QVBoxLayout()
-        mainVBox.addWidget(self.filePath)
-        mainVBox.addWidget(self.tabWidget)
-        #mainVBox.addLayout(mainHBox)
-        self.setLayout(mainVBox)
-
+        self.files.setVerticalScrollBar(self.scrollBar)
 
         self.playCheck = QtGui.QCheckBox()
         self.waveRect = playView()
@@ -324,31 +354,18 @@ class mainWindow(QtGui.QWidget):
         hBox.addWidget(self.waveRect)
 
         tab1Layout = QtGui.QVBoxLayout()
+        tab1Layout.setContentsMargins(0, 0, 0, 0)
         tab1Layout.setSpacing(0)
         tab1Layout.setMargin(0)
-        tab1Layout.setContentsMargins(0, 0, 0, 0)
-        #tab1Layout.addWidget(self.filePath)
         tab1Layout.addWidget(self.files)
         tab1Layout.addLayout(hBox)
         self.tab1.setLayout(tab1Layout)
 
+    def _initPluginsTab(self):
         self.tab2 = QtGui.QWidget()
-        # self.pluginSearch = QtGui.QLineEdit()
-        # self.pluginSearch.setText('search...')
-        # self.files1.setFrameShape(QtGui.QFrame.NoFrame)
 
-        # tab2Layout = QtGui.QVBoxLayout()
-        # tab2Layout.setSpacing(0)
-        # tab2Layout.setMargin(0)
-        # tab2Layout.setContentsMargins(0, 0, 0, 0)
-        # tab2Layout.addWidget(self.files1)
-        # self.tab2.setLayout(tab2Layout)
 
-        self.tabWidget.addTab(self.tab1, "browser")
-        self.tabWidget.addTab(self.tab2, "plugins")
-
-        self.setWindowTitle('Surplus')
-
+    def _initConnections(self):
         self.files.tab_pressed.connect(self.switchTabs)
         self.files.slash_pressed.connect(self.focusPath)
         self.filePath.tab_pressed.connect(self.switchTabs)
@@ -363,7 +380,21 @@ class mainWindow(QtGui.QWidget):
 
         self.playCheck.setChecked(True)
         self.playCheck.stateChanged.emit(QtCore.Qt.Checked)
-        self.files.setFocus()
+
+    def scrollHide(self, a, b):
+        if a==b and not self.scrollBar.isHidden():
+            self.scrollBar.hide()
+            self.blank.show()
+        elif self.scrollBar.isHidden():
+            self.scrollBar.show()
+            self.blank.hide()
+
+    def addTab(self, widget, name):
+        self.widgetStack.addWidget(widget)
+        self.tabBar.addTab(name)
+
+    def sizeHint(self):
+        return QtCore.QSize(220, 500)
 
 
     #def event(self, event):
@@ -373,7 +404,7 @@ class mainWindow(QtGui.QWidget):
     #    return QtGui.QTabWidget.event(self, event)
 
 
-    def switchTabs(self): self.tabWidget.setCurrentIndex((self.currentIndex()+1) % self.count())
+    def switchTabs(self): self.tabBar.setCurrentIndex((self.currentIndex()+1) % self.count())
 
     def focusList(self): self.files.setFocus(QtCore.Qt.ShortcutFocusReason)
 

@@ -8,27 +8,6 @@ mainWindow {
     width:200px;
 }
 
-QTabWidget {
-    padding: 0;
-    margin: 0;
-    border: 0;
-    height:480px;
-    width:200px;
-}
-
-QTabWidget::pane {
-    border: none;
-    margin: 0;
-}
-
-QTabWidget::tab-bar {
-    background-color:red;
-    float:right;
-    margin: 0px;
-    padding: 0px;
-}
-
-
 QTabBar::tab {
     background: rgb(150,150,150);
     border: none;
