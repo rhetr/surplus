@@ -195,18 +195,24 @@ class fileList(QtGui.QListWidget):
         
     def changeDir(self, path):
         self.clear()
-        if path == "Recent": #TODO: press escape or 
+        if path == "Recent":
             self.cwd_folders = ['..']
             self.cwd_files = config['Recent'][::-1]
             self.drawContents()
             self.path_updated.emit('Recent')
         else:
+            prev_folder = os.path.basename(os.getcwd()) \
+                    if os.path.abspath(path) == os.path.dirname(os.getcwd()) \
+                    else None
             os.chdir(path)
             self.cwd_folders, self.cwd_files = self.getContents()
-            self.drawContents()
+            index = self.cwd_folders.index(prev_folder) \
+                    if prev_folder \
+                    else 1
+            self.drawContents(index)
             self.path_updated.emit(os.getcwd())
 
-    def drawContents(self):
+    def drawContents(self, curr_index=1):
         for entry in self.cwd_folders:
             entry_item = listItem(entry, False)
             self.addItem(entry_item)
@@ -215,8 +221,8 @@ class fileList(QtGui.QListWidget):
             self.addItem(entry_item)
 
         if not self.selectedItems():
-            self.setCurrentRow(1)
-            self.current_item = self.item(1)
+            self.setCurrentRow(curr_index)
+            self.current_item = self.item(curr_index)
 
     def isAudio(self, a_file):
         exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a']
