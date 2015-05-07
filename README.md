@@ -34,12 +34,15 @@ TODO
     * plugin paths
 * more shortcuts
     * tab to switch between plugins/files
-    * settings dialog ctrl+P
+    * settings dialog alt+P (just open up a default text editor for the config file)
     * make shortcut for recently used
+    * delete recently used with delete key (confirmation dialogue)
 * sample tagging/smart sample searching
+* filePath improvements
+    * tab completion
+    * breadcrumbs-style clickable interaction (like nautilus)
 
 ###ui/interaction
-* move scrollbar to left side underneath tabs
 * touch interaction
 
 ###plugins
