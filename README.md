@@ -15,7 +15,7 @@ numpy, pyqt4, ffmpeg/avconv, sox, yaml
 
 USAGE
 -----
-* checkbox to disable/enable playback
+* checkbox to disable/enable auditioning
 * config file in $HOME/.config/surplus/config
 
 
@@ -37,10 +37,12 @@ TODO
     * settings dialog alt+P (just open up a default text editor for the config file)
     * make shortcut for recently used
     * delete recently used with delete key (confirmation dialogue)
+    * open current dir in default browser
 * sample tagging/smart sample searching
 * filePath improvements
     * tab completion
     * breadcrumbs-style clickable interaction (like nautilus)
+    * don't retain bad paths
 
 ###ui/interaction
 * touch interaction

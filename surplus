@@ -150,7 +150,7 @@ class fileList(QtGui.QListWidget):
         path = os.path.abspath(str(item[0].text))
         mimeData = QtCore.QMimeData()
         mimeData.setUrls([QtCore.QUrl.fromLocalFile(path)])
-        self.updateRecent(path)
+        if os.path.isfile(path): self.updateRecent(path)
         return mimeData
 
     def keyPressEvent(self, event): #NOQA
@@ -162,6 +162,10 @@ class fileList(QtGui.QListWidget):
                 self.slash_pressed.emit()
             elif event.key() == QtCore.Qt.Key_Escape:
                 self.changeDir(os.getcwd())
+            elif event.key() == QtCore.Qt.Key_Delete:
+                if os.path.abspath(self.current_item.text) in config['Recent']:
+                    config['Recent'].remove(os.path.abspath(self.current_item.text))
+                    self.changeDir('Recent')
             elif event.key() == QtCore.Qt.Key_K:
                 event = QtGui.QKeyEvent(event.type(), QtCore.Qt.Key_Down, QtCore.Qt.NoModifier)
             elif event.key() == QtCore.Qt.Key_L:
@@ -418,7 +422,7 @@ class mainWindow(QtGui.QWidget):
 
     def updatePath(self, text): self.filePath.setEditText(text)
 
-    def updateList(self, text): self.files.changeDir(text)
+    def updateList(self, text): self.files.changeDir(str(text).strip())
 
     # def touchEvent(self, event):
     #     if event == QtGui.QTouchEvent.TouchScreen:
