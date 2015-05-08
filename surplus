@@ -125,6 +125,7 @@ class fileList(QtGui.QListWidget):
     path_updated = QtCore.pyqtSignal(str)
     sample_playing = QtCore.pyqtSignal(bool)
     sample_selected = QtCore.pyqtSignal(str)
+    selected_item = QtCore.pyqtSignal(str)
 
     def __init__(self, path, parent=None):
         QtGui.QListWidget.__init__(self, parent)
@@ -185,6 +186,7 @@ class fileList(QtGui.QListWidget):
 
     def itemSelected(self, row):
         self.current_item = self.item(row)
+        if self.current_item: self.selected_item.emit(self.current_item.text)
         if self.current_item and self.current_item.is_file:
             self.sample_selected.emit(self.current_item.text)
             if self.playback_enabled: self.current_item.playSample()
@@ -227,6 +229,7 @@ class fileList(QtGui.QListWidget):
         if not self.selectedItems():
             self.setCurrentRow(curr_index)
             self.current_item = self.item(curr_index)
+            self.selected_item.emit(self.current_item.text)
 
     def isAudio(self, a_file):
         exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a']
@@ -326,11 +329,15 @@ class mainWindow(QtGui.QWidget):
         self.blank = QtGui.QWidget()
         self.blank.hide()
 
+        self.placesButton = QtGui.QPushButton("+")
+        self.placesButton.sizeHint = self.placesButtonSizeHint
+
         self.tabLayoutBox = QtGui.QVBoxLayout()
         self.tabLayoutBox.setContentsMargins(0,0,0,0)
         self.tabLayoutBox.setSpacing(0)
         self.tabLayoutBox.setMargin(0)
         self.tabLayoutBox.setAlignment(QtCore.Qt.AlignLeft)
+        self.tabLayoutBox.addWidget(self.placesButton)
         self.tabLayoutBox.addWidget(self.tabBar)
         self.tabLayoutBox.addWidget(self.scrollBar)
         self.tabLayoutBox.addWidget(self.blank)
@@ -376,6 +383,7 @@ class mainWindow(QtGui.QWidget):
 
 
     def _initConnections(self):
+        self.files.selected_item.connect(self.updateButton)
         self.files.tab_pressed.connect(self.switchTabs)
         self.files.slash_pressed.connect(self.focusPath)
         self.filePath.tab_pressed.connect(self.switchTabs)
@@ -391,6 +399,27 @@ class mainWindow(QtGui.QWidget):
         self.playCheck.setChecked(True)
         self.playCheck.stateChanged.emit(QtCore.Qt.Checked)
 
+        self.placesButton.clicked.connect(self.modifyPlaces)
+
+    def updateButton(self):
+        places = (os.path.realpath(sym) for sym in config['Places'])
+        text = '-' if os.path.abspath(self.files.current_item.text) in places else '+'
+        self.placesButton.setText(text)
+
+
+    def modifyPlaces(self):
+        path = os.path.abspath(self.files.current_item.text)
+        places = (os.path.realpath(sym) for sym in config['Places'])
+        if path in places:
+            config['Places'].pop(places.index(path))
+            self.placesButton.setText('+')
+        else:
+            config['Places'].append(path)
+            self.placesButton.setText('-')
+        print config['Places']
+
+
+
     def scrollHide(self, a, b):
         if a==b and not self.scrollBar.isHidden():
             self.scrollBar.hide()
@@ -405,6 +434,9 @@ class mainWindow(QtGui.QWidget):
 
     def sizeHint(self):
         return QtCore.QSize(220, 500)
+
+    def placesButtonSizeHint(self):
+        return QtCore.QSize(20,20)
 
 
     #def event(self, event):
