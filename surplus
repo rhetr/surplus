@@ -125,7 +125,6 @@ class fileList(QtGui.QListWidget):
     path_updated = QtCore.pyqtSignal(str)
     sample_playing = QtCore.pyqtSignal(bool)
     sample_selected = QtCore.pyqtSignal(str)
-    selected_item = QtCore.pyqtSignal(str)
 
     def __init__(self, path, parent=None):
         QtGui.QListWidget.__init__(self, parent)
@@ -186,7 +185,6 @@ class fileList(QtGui.QListWidget):
 
     def itemSelected(self, row):
         self.current_item = self.item(row)
-        if self.current_item: self.selected_item.emit(self.current_item.text)
         if self.current_item and self.current_item.is_file:
             self.sample_selected.emit(self.current_item.text)
             if self.playback_enabled: self.current_item.playSample()
@@ -229,7 +227,6 @@ class fileList(QtGui.QListWidget):
         if not self.selectedItems():
             self.setCurrentRow(curr_index)
             self.current_item = self.item(curr_index)
-            self.selected_item.emit(self.current_item.text)
 
     def isAudio(self, a_file):
         exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a']
@@ -391,7 +388,6 @@ class mainWindow(QtGui.QWidget):
 
 
     def _initConnections(self):
-        self.files.selected_item.connect(self.updateButton)
         self.files.tab_pressed.connect(self.switchTabs)
         self.files.slash_pressed.connect(self.focusPath)
         self.filePath.tab_pressed.connect(self.switchTabs)
@@ -413,20 +409,20 @@ class mainWindow(QtGui.QWidget):
 
         self.placesButton.clicked.connect(self.modifyPlaces)
 
-    def updateButton(self):
-        path = os.path.abspath(self.files.current_item.text)
-        if os.path.isfile(path):
+    def updateButton(self, text):
+        if os.path.realpath(os.path.abspath(text)) == \
+                os.path.realpath(os.path.abspath(config['Default Folder'])) or \
+                text == 'Recent':
             self.placesButton.setEnabled(False)
             return
         self.placesButton.setEnabled(True)
+        path = os.path.realpath(os.path.abspath(text))
         places = (os.path.realpath(sym) for sym in config['Places'])
         text = '-' if path in places else '+'
         self.placesButton.setText(text)
 
     def modifyPlaces(self):
-        path = os.path.abspath(self.files.current_item.text)
-        if os.path.isfile(path):
-            return
+        path = os.getcwd()
         places = [os.path.realpath(sym) for sym in config['Places']]
         if path in places:
             self.filePath.removeItem(places.index(path))
@@ -470,9 +466,13 @@ class mainWindow(QtGui.QWidget):
 
     def focusPath(self): self.filePath.setFocus(QtCore.Qt.ShortcutFocusReason)
 
-    def updatePath(self, text): self.filePath.setEditText(text)
+    def updatePath(self, text):
+        self.filePath.setEditText(text)
+        self.updateButton(str(text).strip())
 
-    def updateList(self, text): self.files.changeDir(str(text).strip())
+    def updateList(self, text): 
+        self.files.changeDir(str(text).strip())
+        self.updateButton(str(text).strip())
 
     # def touchEvent(self, event):
     #     if event == QtGui.QTouchEvent.TouchScreen:
