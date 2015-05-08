@@ -15,21 +15,18 @@ numpy, pyqt4, ffmpeg/avconv, sox, yaml
 
 USAGE
 -----
-* checkbox to disable/enable auditioning
-* config file in $HOME/.config/surplus/config
-
-
-KEYBOARD SHORTCUTS
-------------------
 * use arrow keys or jkl; (vim-style) to navigate
 * forward slash focuses the path (escape unfocuses it)
 * space/enter triggers playback
+* checkbox to disable/enable auditioning
+* config file in $HOME/.config/surplus/config
+* view recently used files (i.e. samples that were dragged out)
+* add favorite places to the dropdown filepath menu
 
 TODO
 ----
 ###usability
 * make a proper install script
-* make favorites (favoriting directories as well as files and plugins)
 * config file
     * plugin paths
 * more shortcuts
@@ -39,10 +36,10 @@ TODO
     * delete recently used with delete key (confirmation dialogue)
     * open current dir in default browser
 * sample tagging/smart sample searching
-* filePath improvements
+* filePath improvements (probably gonna have to implement a custom widget for this)
+    * shortcut to expand dropdown menu
     * tab completion
     * breadcrumbs-style clickable interaction (like nautilus)
-    * don't retain bad paths
 
 ###ui/interaction
 * touch interaction

@@ -254,6 +254,7 @@ class fileList(QtGui.QListWidget):
         return dir_list, file_list
 
     def enablePlayback(self, state):
+        config['Play'] = state
         self.playback_enabled = state
 
 # remnants of the qgraphicsview
@@ -268,6 +269,7 @@ class pathLister(QtGui.QComboBox):
     def __init__(self):
         QtGui.QComboBox.__init__(self)
         self.setEditable(True)
+        self.setInsertPolicy(QtGui.QComboBox.NoInsert)
         self.addItems(config['Places'])
         self.addItem('Recent')
         self.activated.connect(self.updatePath)
@@ -396,29 +398,39 @@ class mainWindow(QtGui.QWidget):
         self.files.sample_selected.connect(self.waveRect.loadFile)
         self.playCheck.stateChanged.connect(self.files.enablePlayback)
 
-        self.playCheck.setChecked(True)
-        self.playCheck.stateChanged.emit(QtCore.Qt.Checked)
+        if config['Play']:
+            self.playCheck.setChecked(True)
+            self.playCheck.stateChanged.emit(QtCore.Qt.Checked)
+        else:
+            self.playCheck.setChecked(False)
+            self.playCheck.stateChanged.emit(QtCore.Qt.Unchecked)
 
         self.placesButton.clicked.connect(self.modifyPlaces)
 
     def updateButton(self):
+        path = os.path.abspath(self.files.current_item.text)
+        if os.path.isfile(path):
+            self.placesButton.setEnabled(False)
+            return
+        self.placesButton.setEnabled(True)
         places = (os.path.realpath(sym) for sym in config['Places'])
-        text = '-' if os.path.abspath(self.files.current_item.text) in places else '+'
+        text = '-' if path in places else '+'
         self.placesButton.setText(text)
-
 
     def modifyPlaces(self):
         path = os.path.abspath(self.files.current_item.text)
-        places = (os.path.realpath(sym) for sym in config['Places'])
+        if os.path.isfile(path):
+            return
+        places = [os.path.realpath(sym) for sym in config['Places']]
         if path in places:
+            self.filePath.removeItem(places.index(path))
             config['Places'].pop(places.index(path))
             self.placesButton.setText('+')
         else:
             config['Places'].append(path)
+            self.filePath.insertItem(config['Places'].index(path), path)
             self.placesButton.setText('-')
         print config['Places']
-
-
 
     def scrollHide(self, a, b):
         if a==b and not self.scrollBar.isHidden():

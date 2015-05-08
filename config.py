@@ -16,6 +16,7 @@ config_default['Default Folder'] = os.path.expanduser('~')
 config_default['Stylesheet'] = config_folder + 'style.qss'
 config_default['Places'] = [config_default['Default Folder']]
 config_default['Recent'] = []
+config_default['Play'] = True
 
 if not os.path.isfile(config_file):
     print 'making new config file'
