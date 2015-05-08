@@ -272,6 +272,7 @@ class pathLister(QtGui.QComboBox):
         self.setInsertPolicy(QtGui.QComboBox.NoInsert)
         self.addItems(config['Places'])
         self.addItem('Recent')
+        self.resize()
         self.activated.connect(self.updatePath)
 
     def updatePath(self, index):
@@ -298,6 +299,11 @@ class pathLister(QtGui.QComboBox):
     def focusInEvent(self, event):
         self.prev_text = self.currentText()
         QtGui.QComboBox.focusInEvent(self, event)
+
+    def resize(self):
+        font = QtGui.QFontMetrics(self.font())
+        max_width = 40 + max((font.width(place) for place in config['Places']))
+        self.view().setMinimumWidth(max_width)
 
 class mainWindow(QtGui.QWidget):
 
@@ -430,7 +436,7 @@ class mainWindow(QtGui.QWidget):
             config['Places'].append(path)
             self.filePath.insertItem(config['Places'].index(path), path)
             self.placesButton.setText('-')
-        print config['Places']
+        self.filePath.resize()
 
     def scrollHide(self, a, b):
         if a==b and not self.scrollBar.isHidden():
