@@ -8,6 +8,7 @@ listen to audio samples in an easily-navigable Qt-based file browser made for th
 currently works with carla and drumkv1.
 
 plugin browsing (ladspa,dssi,lv2,vst) to come hopefully.
+*note: I actually don't know any hosts that currently support dragging-and-dropping plugins (ardour can drag-and-drop plugins across tracks but not from its plugin window), so I don't know when I'll get around to doing this.*
 
 DEPENDENCIES
 ------------
