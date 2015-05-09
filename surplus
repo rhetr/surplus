@@ -320,6 +320,7 @@ class mainWindow(QtGui.QWidget):
 
         self._initConnections()
         self.files.setFocus()
+        self.files.setVerticalScrollBar(self.scrollBar)
 
     def _initWidgets(self):
         self.widgetStack = QtGui.QStackedWidget()
@@ -365,7 +366,6 @@ class mainWindow(QtGui.QWidget):
         self.filePath = pathLister()
         self.filePath.setFrame(QtGui.QFrame.NoFrame)
         self.files = fileList(config['Default Folder'])
-        self.files.setVerticalScrollBar(self.scrollBar)
 
         self.playCheck = QtGui.QCheckBox()
         self.waveRect = playView()
