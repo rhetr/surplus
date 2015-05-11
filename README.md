@@ -41,6 +41,7 @@ TODO
     * shortcut to expand dropdown menu
     * tab completion
     * breadcrumbs-style clickable interaction (like nautilus)
+* show carla presets
 
 ###ui/interaction
 * touch interaction

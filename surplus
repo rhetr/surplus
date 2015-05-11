@@ -77,15 +77,16 @@ class playView(QtGui.QGraphicsView):
             length.microsecond * .001
 
     def loadFile(self, a_file):
-        if self.path:
-            self.scene.removeItem(self.path)
-            self.path = None
-        if a_file:
-            length = self.mil(getLength(a_file))
-            if length < 30e3:
-                thread = waveThread(a_file)
-                thread.finished.connect(self.loadWave)
-                thread.start()
+        if config['Show Waveform']:
+            if self.path:
+                self.scene.removeItem(self.path)
+                self.path = None
+            if a_file:
+                length = self.mil(getLength(a_file))
+                if length < 30e3:
+                    thread = waveThread(a_file)
+                    thread.finished.connect(self.loadWave)
+                    thread.start()
 
     def loadWave(self, arr):
         self.path = waveForm(arr)

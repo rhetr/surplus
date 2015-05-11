@@ -17,6 +17,7 @@ config_default['Stylesheet'] = config_folder + 'style.qss'
 config_default['Places'] = [config_default['Default Folder']]
 config_default['Recent'] = []
 config_default['Play'] = True
+config_default['Show Waveform'] = True
 
 if not os.path.isfile(config_file):
     print 'making new config file'
@@ -31,6 +32,8 @@ else:
     if not (type(config) == dict) or \
             not all(setting in config.keys() for setting in config_default.keys()):
         print 'bad config, resetting to defaults'
+        with open(config_folder + 'config.old') as config_old:
+            yaml.dump(config_old, config)
         config = config_default
         with open(config_file, 'wb') as config_file_settings:
             yaml.dump(config_default, config_file_settings)
