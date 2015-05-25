@@ -27,14 +27,14 @@ QTabBar::tab:selected {
     color: rgb(90,132,200);
 }
 
-pathLister {
+inputWidget {
     width: 100%;
     background: #555;
     border-radius:0px;
     color: white;
 }
 
-pathLister::drop-down {
+inputWidget::drop-down {
     border:1px solid #aaa;
 }
 

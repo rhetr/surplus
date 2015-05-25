@@ -259,7 +259,7 @@ class fileList(QtGui.QListWidget):
 #    # def paint(self, painter, option, widget=None):
 #    #     QtGui.QGraphicsView.paint(self, painter, paint_option, widget)
 
-class pathLister(QtGui.QComboBox):
+class inputWidget(QtGui.QComboBox):
     path_updated = QtCore.pyqtSignal(str)
     tab_pressed = QtCore.pyqtSignal()
     esc_pressed = QtCore.pyqtSignal()
@@ -357,14 +357,14 @@ class mainWindow(QtGui.QWidget):
         mainHBox.addWidget(self.widgetStack)
 
         mainVBox = QtGui.QVBoxLayout()
-        mainVBox.addWidget(self.filePath)
+        mainVBox.addWidget(self.inputBox)
         mainVBox.addLayout(mainHBox)
         self.setLayout(mainVBox)
 
     def _initFilesTab(self):
         self.tab1 = QtGui.QWidget()
-        self.filePath = pathLister()
-        self.filePath.setFrame(QtGui.QFrame.NoFrame)
+        self.inputBox = inputWidget()
+        self.inputBox.setFrame(QtGui.QFrame.NoFrame)
         self.files = fileList(config['Default Folder'])
         self.files.setVerticalScrollBar(self.scrollBar)
 
@@ -391,11 +391,11 @@ class mainWindow(QtGui.QWidget):
     def _initConnections(self):
         self.files.tab_pressed.connect(self.switchTabs)
         self.files.slash_pressed.connect(self.focusPath)
-        self.filePath.tab_pressed.connect(self.switchTabs)
-        self.filePath.esc_pressed.connect(self.focusList)
+        self.inputBox.tab_pressed.connect(self.switchTabs)
+        self.inputBox.esc_pressed.connect(self.focusList)
 
         self.files.path_updated.connect(self.updatePath)
-        self.filePath.path_updated.connect(self.updateList)
+        self.inputBox.path_updated.connect(self.updateList)
         self.files.path_updated.emit(config['Default Folder'])
 
         self.files.sample_selected.connect(self.waveRect.loadFile)
@@ -426,14 +426,14 @@ class mainWindow(QtGui.QWidget):
         path = os.getcwd()
         places = [os.path.realpath(sym) for sym in config['Places']]
         if path in places:
-            self.filePath.removeItem(places.index(path))
+            self.inputBox.removeItem(places.index(path))
             config['Places'].pop(places.index(path))
             self.placesButton.setText('+')
         else:
             config['Places'].append(path)
-            self.filePath.insertItem(config['Places'].index(path), path)
+            self.inputBox.insertItem(config['Places'].index(path), path)
             self.placesButton.setText('-')
-        self.filePath.resize()
+        self.inputBox.resize()
 
     def scrollHide(self, a, b):
         if a==b and not self.scrollBar.isHidden():
@@ -465,10 +465,10 @@ class mainWindow(QtGui.QWidget):
 
     def focusList(self): self.files.setFocus(QtCore.Qt.ShortcutFocusReason)
 
-    def focusPath(self): self.filePath.setFocus(QtCore.Qt.ShortcutFocusReason)
+    def focusPath(self): self.inputBox.setFocus(QtCore.Qt.ShortcutFocusReason)
 
     def updatePath(self, text):
-        self.filePath.setEditText(text)
+        self.inputBox.setEditText(text)
         self.updateButton(str(text).strip())
 
     def updateList(self, text): 
