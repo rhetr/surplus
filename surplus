@@ -90,7 +90,7 @@ class playView(QtGui.QGraphicsView):
 
     def loadWave(self, arr):
         self.path = waveForm(arr)
-        clearpen = QtGui.QPen(QtGui.QColor(50, 102, 150))
+        clearpen = QtGui.QPen(QtGui.QColor(70, 122, 100, 150))
         self.path.setPen(clearpen)
         self.scene.addItem(self.path)
 
