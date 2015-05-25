@@ -12,6 +12,9 @@ from PyQt4 import QtGui, QtCore
 from peaks import *
 from config import *
 
+exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a'] # not sure if this should be user-configurable or determined by play/ffmpeg capabilities or what
+audio_only = '|'.join(map(lambda ext: '\.{}'.format(ext), exts))
+
 def handler(*args):
     '''saves the config and kills play before exiting'''
     subprocess.call(['pkill', 'play'])
@@ -217,6 +220,15 @@ class fileList(QtGui.QListWidget):
             self.drawContents(index)
             self.path_updated.emit(os.getcwd())
 
+    def showSearch(self, results):
+        self.clear()
+        self.cwd_folders = ['..', os.getcwd()]
+        self.cwd_files = map(
+                lambda s: './{}'.format(s[len(os.getcwd())+1:]),
+                filter(None, results[:100])
+                )
+        self.drawContents()
+
     def drawContents(self, curr_index=1):
         for entry in self.cwd_folders:
             entry_item = listItem(entry, False)
@@ -230,7 +242,6 @@ class fileList(QtGui.QListWidget):
             self.current_item = self.item(curr_index)
 
     def isAudio(self, a_file):
-        exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a']
         if os.path.splitext(a_file)[1].lower()[1:] in exts:
             return True
         return False
@@ -292,7 +303,7 @@ class inputWidget(QtGui.QComboBox):
         if event.key() == QtCore.Qt.Key_Return:
             if os.path.isdir(self.currentText()):
                 self.path_updated.emit(self.currentText())
-                self.esc_pressed.emit()
+            self.esc_pressed.emit()
 
     def focusInEvent(self, event):
         self.prev_text = self.currentText()
@@ -321,6 +332,7 @@ class mainWindow(QtGui.QWidget):
 
         self._initConnections()
         self.files.setFocus()
+        self.inputBox.editTextChanged.connect(self.parseInput)
 
     def _initWidgets(self):
         self.widgetStack = QtGui.QStackedWidget()
@@ -409,6 +421,35 @@ class mainWindow(QtGui.QWidget):
             self.playCheck.stateChanged.emit(QtCore.Qt.Unchecked)
 
         self.placesButton.clicked.connect(self.modifyPlaces)
+
+    def parseInput(self, text):
+        if len(text) > 0:
+            text = str(text)
+            if str(text)[0] == "/" : self.searchPath(text)
+            else: self.searchText(text)
+
+    def searchPath(self, text):
+        pass
+        #results = subprocess.check_output(('find', text, '-type', 'd')).split('\n')[:100]
+        #self.files.showSearch(results)
+
+    def searchText(self, text):
+        '''uses find, grep and awk to search within the current working directory'''
+        find = subprocess.Popen(('find', os.getcwd()), stdout=subprocess.PIPE)
+        grep_no_peakfiles = subprocess.Popen(('grep', '-vE', '\.asd|\.pf'), stdin=find.stdout, stdout=subprocess.PIPE)
+        grep_audio_only = subprocess.Popen(('grep', '-E', audio_only), stdin=grep_no_peakfiles.stdout, stdout=subprocess.PIPE)
+        # ignore case lol
+        search = ' && '.join(map(
+            lambda word: '/{}/'.format(
+                ''.join(map(
+                    lambda z: '[{}{}]'.format(
+                        z.lower(), z.upper()),
+                    (c for c in word)))),
+                text.split())
+                )
+        awk = subprocess.check_output(('awk', search), stdin=grep_audio_only.stdout)
+        results = awk.split('\n')[:100] # limits results to 100
+        self.files.showSearch(results)
 
     def updateButton(self, text):
         if os.path.realpath(os.path.abspath(text)) == \
