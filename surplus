@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 '''
 surplus
@@ -18,22 +18,22 @@ audio_only = '|'.join(map(lambda ext: '\.{}'.format(ext), exts))
 def handler(*args):
     '''saves the config and kills play before exiting'''
     subprocess.call(['pkill', 'play'])
-    print 'caught exit signal'
+    print('caught exit signal')
     if not config:
-        print 'error, config not saved'
+        print('error, config not saved')
     else:
-        print 'saving config'
-        with open(config_file, 'wb') as config_file_settings:
+        print('saving config')
+        with open(config_file, 'w') as config_file_settings:
             yaml.dump(config, config_file_settings)
-    print 'exiting'
+    print('exiting')
     sys.exit(0)
 
 def getLength(a_file):
-    x = [FFMPEG_BIN, '-i', str(a_file)]
+    x = (FFMPEG_BIN, '-i', str(a_file))
     try:
         output = subprocess.check_output(x, stderr=subprocess.STDOUT)
-    except Exception, e:
-        output = str(e.output)
+    except subprocess.CalledProcessError as err:
+        output = str(err)
     finished = output.split('\n')
     for line in finished:
         if "Duration" in line:
@@ -85,11 +85,11 @@ class playView(QtGui.QGraphicsView):
                 self.scene.removeItem(self.path)
                 self.path = None
             if a_file:
-                length = self.mil(getLength(a_file))
-                if length < 30e3:
-                    thread = waveThread(a_file)
-                    thread.finished.connect(self.loadWave)
-                    thread.start()
+                #length = self.mil(getLength(a_file))
+                #if length < 30e3:
+                thread = waveThread(a_file)
+                thread.finished.connect(self.loadWave)
+                thread.start()
 
     def loadWave(self, arr):
         self.path = waveForm(arr)
@@ -338,7 +338,8 @@ class mainWindow(QtGui.QWidget):
         self.widgetStack = QtGui.QStackedWidget()
 
         self.tabBar = QtGui.QTabBar()
-        self.tabBar.currentChanged.connect(self.widgetStack.setCurrentIndex)
+        #self.tabBar.currentChanged.connect(self.widgetStack.setCurrentIndex)
+        self.tabBar.currentChanged.connect(self.changeWidget)
         self.tabBar.setShape(QtGui.QTabBar.RoundedWest)
         self.tabBar.updateGeometry()
         
@@ -399,7 +400,6 @@ class mainWindow(QtGui.QWidget):
     def _initPluginsTab(self):
         self.tab2 = QtGui.QWidget()
 
-
     def _initConnections(self):
         self.files.tab_pressed.connect(self.switchTabs)
         self.files.slash_pressed.connect(self.focusPath)
@@ -421,6 +421,10 @@ class mainWindow(QtGui.QWidget):
             self.playCheck.stateChanged.emit(QtCore.Qt.Unchecked)
 
         self.placesButton.clicked.connect(self.modifyPlaces)
+
+    def changeWidget(self, index):
+        self.widgetStack.setCurrentIndex(index)
+        # have to move scrollbar too
 
     def parseInput(self, text):
         if len(text) > 0:
@@ -498,7 +502,7 @@ class mainWindow(QtGui.QWidget):
     #def event(self, event):
     #    if type(event) == QtGui.QKeyEvent:
     #        if event.key() == QtCore.Qt.Key_Tab: #not working
-    #            print self.focusWidget()
+    #            print(self.focusWidget())
     #    return QtGui.QTabWidget.event(self, event)
 
 
@@ -518,7 +522,7 @@ class mainWindow(QtGui.QWidget):
 
     # def touchEvent(self, event):
     #     if event == QtGui.QTouchEvent.TouchScreen:
-    #         print 'ok'
+    #         print('ok')
 
 if __name__ == '__main__':
     for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
@@ -527,14 +531,11 @@ if __name__ == '__main__':
 
     with open(config['Stylesheet'], 'r') as content_file:
         content = content_file.read()
-    stylesheet = QtCore.QLatin1String(content)
+    #stylesheet = QtCore.QLatin1String(content)
+    stylesheet = content
     app.setStyleSheet(stylesheet)
     app.aboutToQuit.connect(handler)
 
     main = mainWindow()
     main.show()
-
-    timer = QtCore.QTimer()
-    timer.start(500)
-    timer.timeout.connect(lambda: None)
     sys.exit(app.exec_())

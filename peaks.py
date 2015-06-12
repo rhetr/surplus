@@ -1,11 +1,11 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #filename: peaks.py
 
 import subprocess as sp
 import numpy as np
 import sys
 import os
-import cPickle as pickle
+import pickle
 from PyQt4 import QtGui, QtCore
 import datetime
 
@@ -17,7 +17,7 @@ class Test(QtGui.QGraphicsView):
 
         audio_file = '/media/Data/audio/sounds/drum sounds/[99Sounds] 99 Drum Samples/Samples/kick-slapback.wav'
         audio_file = '/media/Data/audio/cats/Portamento Electro.m4a'
-        print os.path.exists(audio_file)
+        print(os.path.exists(audio_file))
         thread = waveThread(audio_file)
         thread.finished.connect(self.load)
         thread.start()
@@ -39,7 +39,8 @@ class waveThread(QtCore.QThread):
 
     def run(self):
         pf = self.audio_file + '.pf'
-        self.wave = pickle.load(open(pf, 'rb')) if os.path.exists(pf) else self.makeWave(self.audio_file)
+        #self.wave = pickle.load(open(pf, 'rb')) if os.path.exists(pf) else self.makeWave(self.audio_file)
+        self.wave = self.makeWave(self.audio_file)
         self.finished.emit(self.wave)
 
     def makeWave(self, audio_file):
@@ -61,11 +62,11 @@ class waveThread(QtCore.QThread):
         audio_array *= (height/float(np.amax(audio_array)))
         audio_array += height
         size = audio_array.size
-        print size
+        print(size)
         t = np.linspace(0,width,size)
         wave = np.array((audio_array,t))
         pickle.dump(wave, open(audio_file + '.pf', 'wb'), protocol=2)
-        print 'finished making wave'
+        print('finished making wave')
         return wave
 
 
@@ -79,7 +80,7 @@ class waveForm(QtGui.QGraphicsPathItem):
         for i in range(1, wave.shape[1]):
             path.lineTo(wave[1,i],wave[0,i])
         x = datetime.datetime.now() - s
-        print x.seconds, x.microseconds
+        print((x.seconds, x.microseconds))
 
         self.setPath(path)
 
@@ -107,7 +108,7 @@ if which('ffmpeg'):
 elif which('avconv'):
     FFMPEG_BIN = 'avconv'
 else:
-    print 'ffmpeg or avconv not installed'
+    print('ffmpeg or avconv not installed')
     sys.exit()
 
 
@@ -117,4 +118,3 @@ if __name__ == '__main__':
     test2 = Test()
     test2.show()
     sys.exit(example.exec_())
-

@@ -48,3 +48,7 @@ fileList::item:selected {
     background-color: rgb(50,102,150);
 }
 
+QTreeWidget {
+    background-color: #111;
+    color: #aaa;
+}
