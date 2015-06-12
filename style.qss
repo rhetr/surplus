@@ -38,13 +38,13 @@ inputWidget::drop-down {
     border:1px solid #aaa;
 }
 
-fileList {
+BaseList {
     background-color: #111;
     color: #aaa;
     border-radius: 0px;
 }
 
-fileList::item:selected {
+BaseList::item:selected {
     background-color: rgb(50,102,150);
 }
 
