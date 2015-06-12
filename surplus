@@ -9,7 +9,9 @@ import subprocess
 import signal
 import datetime
 from PyQt4 import QtGui, QtCore
-from peaks import *
+
+
+from FileList import *
 from config import *
 
 exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a'] # not sure if this should be user-configurable or determined by play/ffmpeg capabilities or what
@@ -42,13 +44,6 @@ def getLength(a_file):
     return datetime.datetime.strptime(
         finished.split()[1][:-1], '%H:%M:%S.%f'
         ).time()
-
-
-def play(a_file):
-    return subprocess.Popen(['play', '-q', a_file],
-                            stdout=subprocess.PIPE,
-                            preexec_fn=os.setsid)
-
 
 class playView(QtGui.QGraphicsView):
     def __init__(self):
@@ -107,164 +102,6 @@ class playView(QtGui.QGraphicsView):
 
     def animate(self):
         self.tl.start()
-
-class listItem(QtGui.QListWidgetItem):
-    def __init__(self, text, is_file=True):
-        QtGui.QListWidgetItem.__init__(self)
-        self.is_file = is_file
-        self.text = text
-        self.text += '/' if not is_file else ''
-        self.setText(self.text)
-        self.current_item = None
-        self.playing = None
-
-    def playSample(self):
-        if self.playing:
-            os.killpg(self.playing.pid, signal.SIGTERM)
-        self.playing = play(self.text)
-
-class fileList(QtGui.QListWidget):
-    tab_pressed = QtCore.pyqtSignal()
-    slash_pressed = QtCore.pyqtSignal()
-    path_updated = QtCore.pyqtSignal(str)
-    sample_playing = QtCore.pyqtSignal(bool)
-    sample_selected = QtCore.pyqtSignal(str)
-
-    def __init__(self, path, parent=None):
-        QtGui.QListWidget.__init__(self, parent)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setDragDropMode(QtGui.QAbstractItemView.DragOnly)
-        self.parent = parent
-
-        self.playback_enabled = False
-        self.current_item = None
-        self.select_flag = False
-        self.changeDir(path)
-
-        self.currentRowChanged.connect(self.itemSelected)
-        self.itemClicked.connect(self.activatePressed)
-
-    def updateRecent(self, path):
-        if path in config['Recent']: config['Recent'].remove(path)
-        config['Recent'].append(path)
-        if len(config['Recent']) > 50: config['Recent'].pop(0)
-
-    def mimeData(self, item):
-        path = os.path.abspath(str(item[0].text))
-        mimeData = QtCore.QMimeData()
-        mimeData.setUrls([QtCore.QUrl.fromLocalFile(path)])
-        if os.path.isfile(path): self.updateRecent(path)
-        return mimeData
-
-    def keyPressEvent(self, event): #NOQA
-        if type(event) == QtGui.QKeyEvent:
-            #if event.key() == QtCore.Qt.Key_Tab: #not working
-            #    self.tab_pressed.emit()
-            #    return 1
-            if event.key() == QtCore.Qt.Key_Slash:
-                self.slash_pressed.emit()
-            elif event.key() == QtCore.Qt.Key_Escape:
-                self.changeDir(os.getcwd())
-            elif event.key() == QtCore.Qt.Key_Delete:
-                if os.path.abspath(self.current_item.text) in config['Recent']:
-                    config['Recent'].remove(os.path.abspath(self.current_item.text))
-                    self.changeDir('Recent')
-            elif event.key() == QtCore.Qt.Key_K:
-                event = QtGui.QKeyEvent(event.type(), QtCore.Qt.Key_Down, QtCore.Qt.NoModifier)
-            elif event.key() == QtCore.Qt.Key_L:
-                event = QtGui.QKeyEvent(event.type(), QtCore.Qt.Key_Up, QtCore.Qt.NoModifier)
-            elif event.key() == QtCore.Qt.Key_Left \
-                    or event.key() == QtCore.Qt.Key_J:
-                self.changeDir('..')
-            elif event.key() == QtCore.Qt.Key_Right \
-                    or event.key() == QtCore.Qt.Key_Semicolon:
-                if not self.current_item.is_file:
-                    self.changeDir(self.selectedItems()[0].text)
-            elif event.key() == QtCore.Qt.Key_Return \
-                    or event.key() == QtCore.Qt.Key_Space:
-                if self.current_item.is_file: self.current_item.playSample()
-                else: self.changeDir(self.current_item.text)
-        QtGui.QListWidget.keyPressEvent(self, event)
-
-    def itemSelected(self, row):
-        self.current_item = self.item(row)
-        if self.current_item and self.current_item.is_file:
-            self.sample_selected.emit(self.current_item.text)
-            if self.playback_enabled: self.current_item.playSample()
-        self.select_flag = True
-
-    def activatePressed(self, item):
-        if self.select_flag:
-            self.select_flag = False
-        elif self.current_item:
-            if self.current_item.is_file and self.playback_enabled: self.current_item.playSample()
-            else: self.changeDir(self.current_item.text)
-        
-    def changeDir(self, path):
-        self.clear()
-        if path == "Recent":
-            self.cwd_folders = ['..']
-            self.cwd_files = config['Recent'][::-1]
-            self.drawContents()
-            self.path_updated.emit('Recent')
-        else:
-            prev_folder = os.path.basename(os.getcwd()) \
-                    if os.path.abspath(path) == os.path.dirname(os.getcwd()) \
-                    else None
-            os.chdir(path)
-            self.cwd_folders, self.cwd_files = self.getContents()
-            index = self.cwd_folders.index(prev_folder) \
-                    if prev_folder \
-                    else 1
-            self.drawContents(index)
-            self.path_updated.emit(os.getcwd())
-
-    def showSearch(self, results):
-        self.clear()
-        self.cwd_folders = ['..', os.getcwd()]
-        self.cwd_files = map(
-                lambda s: './{}'.format(s[len(os.getcwd())+1:]),
-                filter(None, results[:100])
-                )
-        self.drawContents()
-
-    def drawContents(self, curr_index=1):
-        for entry in self.cwd_folders:
-            entry_item = listItem(entry, False)
-            self.addItem(entry_item)
-        for entry in self.cwd_files:
-            entry_item = listItem(entry, True)
-            self.addItem(entry_item)
-
-        if not self.selectedItems():
-            self.setCurrentRow(curr_index)
-            self.current_item = self.item(curr_index)
-
-    def isAudio(self, a_file):
-        if os.path.splitext(a_file)[1].lower()[1:] in exts:
-            return True
-        return False
-
-    def getContents(self):
-        entries = os.listdir(os.getcwd())
-        entries = [i for i in entries if not i.startswith('.')]
-        dir_list = ['..']
-        file_list = []
-        for entry in entries:
-            if os.path.isdir(entry):
-                dir_list.append(entry)
-            elif os.path.isfile(entry):
-                if self.isAudio(entry):
-                    file_list.append(entry)
-        dir_list.sort(key=str.lower)
-        file_list.sort(key=str.lower)
-
-        return dir_list, file_list
-
-    def enablePlayback(self, state):
-        config['Play'] = state
-        self.playback_enabled = state
 
 # remnants of the qgraphicsview
 #    # def paint(self, painter, option, widget=None):
@@ -378,7 +215,7 @@ class mainWindow(QtGui.QWidget):
         self.tab1 = QtGui.QWidget()
         self.inputBox = inputWidget()
         self.inputBox.setFrame(QtGui.QFrame.NoFrame)
-        self.files = fileList(config['Default Folder'])
+        self.files = FileList(config['Default Folder'])
         self.files.setVerticalScrollBar(self.scrollBar)
 
         self.playCheck = QtGui.QCheckBox()
@@ -439,20 +276,20 @@ class mainWindow(QtGui.QWidget):
 
     def searchText(self, text):
         '''uses find, grep and awk to search within the current working directory'''
-        find = subprocess.Popen(('find', os.getcwd()), stdout=subprocess.PIPE)
-        grep_no_peakfiles = subprocess.Popen(('grep', '-vE', '\.asd|\.pf'), stdin=find.stdout, stdout=subprocess.PIPE)
-        grep_audio_only = subprocess.Popen(('grep', '-E', audio_only), stdin=grep_no_peakfiles.stdout, stdout=subprocess.PIPE)
-        # ignore case lol
-        search = ' && '.join(map(
+        ignore_case = ' && '.join(map(
             lambda word: '/{}/'.format(
                 ''.join(map(
                     lambda z: '[{}{}]'.format(
                         z.lower(), z.upper()),
                     (c for c in word)))),
-                text.split())
-                )
-        awk = subprocess.check_output(('awk', search), stdin=grep_audio_only.stdout)
-        results = awk.split('\n')[:100] # limits results to 100
+                text.split()))
+
+        cmd = "find '{}' | grep -vE '\.asd|\.pf' | grep -E '{}'| awk {}".format(
+                os.getcwd(),
+                audio_only,
+                ignore_case)
+
+        results = subprocess.check_output(cmd, shell=True).decode('utf-8').split('\n')[:100]
         self.files.showSearch(results)
 
     def updateButton(self, text):
@@ -517,7 +354,7 @@ class mainWindow(QtGui.QWidget):
         self.updateButton(str(text).strip())
 
     def updateList(self, text): 
-        self.files.changeDir(str(text).strip())
+        self.files.updateList(str(text).strip())
         self.updateButton(str(text).strip())
 
     # def touchEvent(self, event):
