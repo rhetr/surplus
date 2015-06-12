@@ -10,7 +10,7 @@ works with carla, drumkv1, ardour and any other app that supports drag-and-drop
 plugin browsing (ladspa,dssi,lv2,vst) to come hopefully. **lv2 browsing sort of works! it can be used with my little ingen helper app [ingen.place](http://github.com/rhetr/ingen-scripts) to put stuff in an ingen engine**
 
 ## DEPENDENCIES
-python3, numpy, pyqt4, ffmpeg/avconv, sox, yaml
+python3, numpy, pyqt4, ffmpeg/avconv, sox, yaml, lilv
 
 ## USAGE
 * use arrow keys or jkl; (vi-style) to navigate

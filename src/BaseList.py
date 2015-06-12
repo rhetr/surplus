@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import os
 from PyQt4 import QtGui, QtCore
 
 class BaseListItem(QtGui.QListWidgetItem):
