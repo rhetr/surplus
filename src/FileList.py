@@ -10,6 +10,7 @@ from peaks import *
 from config import *
 
 exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a']
+audio_only = '|'.join(map(lambda ext: '\.{}'.format(ext), exts))
 
 def play(a_file):
     return subprocess.Popen(['play', '-q', a_file],
@@ -35,14 +36,14 @@ class FileList(BaseList):
         self.playback_enabled = False
 
         self.updateList(path)
-        self.itemClicked.connect(self.activatePressed)
 
     def mimeData(self, item):
         path = os.path.abspath(str(item[0].text))
-        mimeData = QtCore.QMimeData()
-        mimeData.setUrls([QtCore.QUrl.fromLocalFile(path)])
-        if os.path.isfile(path): self.updateRecent(path)
-        return mimeData
+        if os.path.isfile(path):
+            mimeData = QtCore.QMimeData()
+            mimeData.setUrls([QtCore.QUrl.fromLocalFile(path)])
+            self.updateRecent(path)
+            return mimeData
 
     def _keyEvents(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
@@ -59,6 +60,13 @@ class FileList(BaseList):
                 or event.key() == QtCore.Qt.Key_Semicolon:
             if not self.current_item.is_single:
                 self.updateList(self.selectedItems()[0].text)
+
+    def activatePressed(self, item):
+        if self.select_flag:
+            self.select_flag = False
+        elif self.current_item:
+            if self.current_item.is_single and self.playback_enabled: self.current_item.playSample()
+            else: self.updateList(self.current_item.text)
 
 
     def _isAudio(self, a_file):
@@ -118,13 +126,6 @@ class FileList(BaseList):
         if not self.selectedItems():
             self.setCurrentRow(curr_index)
             self.current_item = self.item(curr_index)
-
-    def activatePressed(self, item):
-        if self.select_flag:
-            self.select_flag = False
-        elif self.current_item:
-            if self.current_item.is_single and self.playback_enabled: self.current_item.playSample()
-            else: self.updateList(self.current_item.text)
 
     def enablePlayback(self, state):
         config['Play'] = state

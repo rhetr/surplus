@@ -27,9 +27,10 @@ class PluginList(BaseList):
         self.updateList(self.model)
 
     def mimeData(self, item):
-        mimeData = QtCore.QMimeData()
-        mimeData.setUrls([QtCore.QUrl(item[0].node.uri)])
-        return mimeData
+        if item[0].is_single:
+            mimeData = QtCore.QMimeData()
+            mimeData.setUrls([QtCore.QUrl(item[0].node.uri)])
+            return mimeData
 
     def _keyEvents(self, event):
         if event.key() == QtCore.Qt.Key_Return \
@@ -42,6 +43,12 @@ class PluginList(BaseList):
                 or event.key() == QtCore.Qt.Key_Semicolon:
             if not self.current_item.is_single:
                 self.updateList(self.selectedItems()[0].node)
+
+    def activatePressed(self, item):
+        if self.select_flag:
+            self.select_flag = False
+        elif not self.current_item.is_single:
+            self.updateList(self.current_item.node)
 
     def drawContents(self, curr_index=1):
         for entry in self.cwd_dirs:

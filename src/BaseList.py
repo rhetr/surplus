@@ -27,6 +27,7 @@ class BaseList(QtGui.QListWidget):
         self.select_flag = False
 
         self.currentRowChanged.connect(self.itemSelected)
+        self.itemClicked.connect(self.activatePressed)
 
     def updateRecent(self, path):
         if path in config['Recent']: config['Recent'].remove(path)
@@ -37,11 +38,17 @@ class BaseList(QtGui.QListWidget):
         '''reimplement'''
         pass
 
+    def event(self, event):
+        if type(event) == QtGui.QKeyEvent \
+                and event.key() == QtCore.Qt.Key_Tab:
+                    self.tab_pressed.emit()
+                    return True
+        else:
+            return super(BaseList, self).event(event)
+
+
     def keyPressEvent(self, event):
         if type(event) == QtGui.QKeyEvent:
-            #if event.key() == QtCore.Qt.Key_Tab: #not working
-            #    self.tab_pressed.emit()
-            #    return 1
             if event.key() == QtCore.Qt.Key_Slash:
                 self.slash_pressed.emit()
             elif event.key() == QtCore.Qt.Key_K:
@@ -82,7 +89,4 @@ class BaseList(QtGui.QListWidget):
         ''' should be reimplemented'''
 
     def activatePressed(self, item):
-        if self.select_flag:
-            self.select_flag = False
-        elif self.current_item:
-            self.updateList(self.current_item.text)
+        ''' should be reimplemented '''

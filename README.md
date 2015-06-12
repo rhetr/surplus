@@ -14,6 +14,7 @@ python3, numpy, pyqt4, ffmpeg/avconv, sox, yaml
 
 ## USAGE
 * use arrow keys or jkl; (vi-style) to navigate
+* tab switches between plugins/files
 * forward slash focuses the input box (escape unfocuses it)
 	* typing a forward slash into the input box lets it know that you're going to enter another path
 	* otherwise a local, case-insensitive `awk` search is performed in the current directory (I'm not sure how useful this will be but it was fun to figure out how to do)
@@ -32,7 +33,6 @@ python3, numpy, pyqt4, ffmpeg/avconv, sox, yaml
 * config file
     * plugin paths
 * more shortcuts
-    * tab to switch between plugins/files
     * settings dialog alt+P (just open up a default text editor for the config file)
     * add keybinding for recently used
     * delete recently used with delete key (confirmation dialogue)
