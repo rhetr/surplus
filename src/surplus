@@ -47,7 +47,7 @@ def getLength(a_file):
         finished.split()[1][:-1], '%H:%M:%S.%f'
         ).time()
 
-class playView(QtGui.QGraphicsView):
+class PlayView(QtGui.QGraphicsView):
     def __init__(self):
         QtGui.QGraphicsView.__init__(self)
         self.setBackgroundBrush(QtGui.QColor(34, 34, 34))
@@ -109,7 +109,7 @@ class playView(QtGui.QGraphicsView):
 #    # def paint(self, painter, option, widget=None):
 #    #     QtGui.QGraphicsView.paint(self, painter, paint_option, widget)
 
-class inputWidget(QtGui.QComboBox):
+class InputWidget(QtGui.QComboBox):
     path_updated = QtCore.pyqtSignal(str)
     tab_pressed = QtCore.pyqtSignal()
     esc_pressed = QtCore.pyqtSignal()
@@ -153,7 +153,7 @@ class inputWidget(QtGui.QComboBox):
         max_width = 40 + max((font.width(place) for place in config['Places']))
         self.view().setMinimumWidth(max_width)
 
-class mainWindow(QtGui.QWidget):
+class MainWindow(QtGui.QWidget):
 
     def __init__(self):
         QtGui.QWidget.__init__(self)
@@ -215,13 +215,13 @@ class mainWindow(QtGui.QWidget):
 
     def _initFilesTab(self):
         self.tab1 = QtGui.QWidget()
-        self.inputBox = inputWidget()
+        self.inputBox = InputWidget()
         self.inputBox.setFrame(QtGui.QFrame.NoFrame)
         self.files = FileList(config['Default Folder'])
         self.files.setVerticalScrollBar(self.scrollBar)
 
         self.playCheck = QtGui.QCheckBox()
-        self.waveRect = playView()
+        self.waveRect = PlayView()
         self.waveRect.setMaximumHeight(20)
         self.waveRect.setFrameShape(QtGui.QFrame.NoFrame)
         hBox = QtGui.QHBoxLayout()
@@ -377,6 +377,6 @@ if __name__ == '__main__':
     app.setStyleSheet(stylesheet)
     app.aboutToQuit.connect(handler)
 
-    main = mainWindow()
+    main = MainWindow()
     main.show()
     sys.exit(app.exec_())
