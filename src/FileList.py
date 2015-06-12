@@ -107,15 +107,6 @@ class FileList(BaseList):
             self.drawContents(index)
             self.path_updated.emit(os.getcwd())
 
-    def showSearch(self, results):
-        self.clear()
-        self.cwd_dirs = ['..', os.getcwd()]
-        self.cwd_items = map(
-                lambda s: './{}'.format(s[len(os.getcwd())+1:]),
-                filter(None, results[:100])
-                )
-        self.drawContents()
-
     def drawContents(self, curr_index=1):
         for entry in self.cwd_dirs:
             entry_item = FileListItem(entry, False)
@@ -138,3 +129,36 @@ class FileList(BaseList):
     def enablePlayback(self, state):
         config['Play'] = state
         self.playback_enabled = state
+
+    def parseInput(self, text):
+        if len(text) > 0:
+            text = str(text)
+            if not str(text)[0] == "/": self.searchText(text)
+
+    def searchText(self, text):
+        '''uses find, grep and awk to search within the current working directory'''
+        ignore_case = ' && '.join(map(
+            lambda word: '/{}/'.format(
+                ''.join(map(
+                    lambda z: '[{}{}]'.format(
+                        z.lower(), z.upper()),
+                    (c for c in word)))),
+                text.split()))
+
+        cmd = "find '{}' | grep -vE '\.asd|\.pf' | grep -E '{}'| awk {}".format(
+                os.getcwd(),
+                audio_only,
+                ignore_case)
+
+        results = subprocess.check_output(cmd, shell=True).decode('utf-8').split('\n')[:100]
+        self.showSearch(results)
+
+    def showSearch(self, results):
+        self.clear()
+        self.cwd_dirs = ['..', os.getcwd()]
+        self.cwd_items = map(
+                lambda s: './{}'.format(s[len(os.getcwd())+1:]),
+                filter(None, results[:100])
+                )
+        self.drawContents()
+

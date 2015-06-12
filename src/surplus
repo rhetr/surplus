@@ -254,6 +254,9 @@ class MainWindow(QtGui.QWidget):
         self.files.sample_selected.connect(self.waveRect.loadFile)
         self.playCheck.stateChanged.connect(self.files.enablePlayback)
 
+        self.tab2.tab_pressed.connect(self.switchTabs)
+        self.tab2.slash_pressed.connect(self.focusPath)
+
         if config['Play']:
             self.playCheck.setChecked(True)
             self.playCheck.stateChanged.emit(QtCore.Qt.Checked)
@@ -268,33 +271,8 @@ class MainWindow(QtGui.QWidget):
         # have to move scrollbar too
 
     def parseInput(self, text):
-        if len(text) > 0:
-            text = str(text)
-            if str(text)[0] == "/" : self.searchPath(text)
-            else: self.searchText(text)
+        self.widgetStack.currentWidget().parseInput(text)
 
-    def searchPath(self, text):
-        pass
-        #results = subprocess.check_output(('find', text, '-type', 'd')).split('\n')[:100]
-        #self.files.showSearch(results)
-
-    def searchText(self, text):
-        '''uses find, grep and awk to search within the current working directory'''
-        ignore_case = ' && '.join(map(
-            lambda word: '/{}/'.format(
-                ''.join(map(
-                    lambda z: '[{}{}]'.format(
-                        z.lower(), z.upper()),
-                    (c for c in word)))),
-                text.split()))
-
-        cmd = "find '{}' | grep -vE '\.asd|\.pf' | grep -E '{}'| awk {}".format(
-                os.getcwd(),
-                audio_only,
-                ignore_case)
-
-        results = subprocess.check_output(cmd, shell=True).decode('utf-8').split('\n')[:100]
-        self.files.showSearch(results)
 
     def updateButton(self, text):
         if os.path.realpath(os.path.abspath(text)) == \
