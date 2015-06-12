@@ -8,7 +8,7 @@ QPushButton {
     font-weight:bold;
 }
 
-mainWindow {
+MainWindow {
     padding: 0;
     margin: 0;
     background-color: #222;
@@ -27,14 +27,14 @@ QTabBar::tab:selected {
     color: rgb(90,132,200);
 }
 
-inputWidget {
+InputWidget {
     width: 100%;
     background: #555;
     border-radius:0px;
     color: white;
 }
 
-inputWidget::drop-down {
+InputWidget::drop-down {
     border:1px solid #aaa;
 }
 
