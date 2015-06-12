@@ -11,6 +11,8 @@ import datetime
 from PyQt4 import QtGui, QtCore
 
 
+from PluginTreeBuilder import *
+from PluginList import *
 from FileList import *
 from config import *
 
@@ -235,7 +237,9 @@ class mainWindow(QtGui.QWidget):
         self.tab1.setLayout(tab1Layout)
 
     def _initPluginsTab(self):
-        self.tab2 = QtGui.QWidget()
+        build = PluginTreeBuilder()
+        self.tab2 = PluginList(build.root)
+        self.tab2.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 
     def _initConnections(self):
         self.files.tab_pressed.connect(self.switchTabs)
