@@ -17,7 +17,8 @@ class PluginTreeBuilder:
             if not a.get_class().get_parent_uri().is_uri():
                 if not self.root:
                     self.root = CategoryNode(str(a.get_class().get_uri()))
-                self.root.add(PluginNode(str(a.get_name()), str(a.get_uri())))
+                plugin = PluginNode(str(a.get_name()), str(a.get_uri()))
+                self.root.add(plugin)
                 all_plugins.remove(a)
 
         self.build_tree(all_plugins, self.root)
@@ -39,16 +40,21 @@ class PluginTreeBuilder:
         else:
             for a in plugin_list:
                 if str(a.get_class().get_uri()) == root.name:
-                    root.add(PluginNode(str(a.get_name()), str(a.get_uri())))
+                    plugin = PluginNode(str(a.get_name()), str(a.get_uri()))
+                    root.add(plugin)
                 elif str(a.get_class().get_parent_uri()) == root.name:
                     node = str(a.get_class().get_uri())
                     children = map(lambda y: y.name, filter(lambda x: type(x) == CategoryNode, root.children))
                     if node not in children:
-                        root.add( CategoryNode( node, [PluginNode( str(a.get_name()), str(a.get_uri()))]) ) 
+                        plugin = PluginNode( str(a.get_name()), str(a.get_uri()))
+                        category = CategoryNode(node)
+                        category.add(plugin)
+                        root.add(category)
                     else:
                         for i in range(len(root.children)):
                             if type(root.children[i] == CategoryNode) and root.children[i].name == node:
-                                root.children[i].add(PluginNode(str(a.get_name()),str(a.get_uri())))
+                                plugin = PluginNode(str(a.get_name()),str(a.get_uri()))
+                                root.children[i].add(plugin)
                                 break
                 else:
                     unsorted_plugins.append(a)

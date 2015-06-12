@@ -22,6 +22,7 @@ class PluginList(BaseList):
     def __init__(self, model, parent=None):
         super(PluginList, self).__init__(parent)
         self.model = model
+        self.plugins = self.model.getAllPlugins()
         self.cwd = self.model
         self.updateList(self.model)
 
@@ -34,7 +35,9 @@ class PluginList(BaseList):
         if event.key() == QtCore.Qt.Key_Return \
                 or event.key() == QtCore.Qt.Key_Space:
             if not self.current_item.is_single:
-                self.updateList(self.current_item.text)
+                self.updateList(self.current_item.node)
+            else:
+                print(self.current_item.node.types())
         elif event.key() == QtCore.Qt.Key_Right \
                 or event.key() == QtCore.Qt.Key_Semicolon:
             if not self.current_item.is_single:
@@ -82,3 +85,16 @@ class PluginList(BaseList):
         #        if parent \
         #        else 1
         self.drawContents(index)
+
+    def parseInput(self, text):
+        results = list(
+                filter(lambda x: 
+            str(text.lower()) in x.name.lower() or
+            any(str(text.lower()) in cat.lower() for cat in x.types()), self.plugins))
+        self.showSearch(results)
+
+    def showSearch(self, results):
+        self.clear()
+        self.cwd_dirs = []
+        self.cwd_items = results
+        self.drawContents()

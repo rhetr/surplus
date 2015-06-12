@@ -7,8 +7,7 @@ listen to audio samples in an easily-navigable Qt-based file browser made for th
 
 works with carla, drumkv1, ardour and any other app that supports drag-and-drop
 
-plugin browsing (ladspa,dssi,lv2,vst) to come hopefully.
-*note: I actually don't know any hosts that currently support dragging-and-dropping plugins (ardour can drag-and-drop plugins across tracks but not from its plugin window), so I don't know when I'll get around to doing this.*
+plugin browsing (ladspa,dssi,lv2,vst) to come hopefully. **lv2 browsing sort of works! it can be used with my [ingen script](http://github.com/rhetr/ingen-scripts/scripts/ingen.place) to put stuff in an ingen engine**
 
 ## DEPENDENCIES
 python3, numpy, pyqt4, ffmpeg/avconv, sox, yaml
@@ -23,6 +22,9 @@ python3, numpy, pyqt4, ffmpeg/avconv, sox, yaml
 * checkbox disables/enables auditioning
 * the config file is in $HOME/.config/surplus/config
 * add/remove favorite places to the dropdown filepath menu by clicking the +/- button 
+* drag and drop plugins into ingen.place to add them to a graph
+* search for plugins by name or category
+
 
 ## TODO
 ### usability
@@ -36,17 +38,20 @@ python3, numpy, pyqt4, ffmpeg/avconv, sox, yaml
     * delete recently used with delete key (confirmation dialogue)
     * open current dir in default browser
 * sample tagging/smart sample searching
-* filePath improvements (probably gonna have to implement a custom widget for this)
+* InputWidget improvements (probably gonna have to implement a custom widget for this)
     * shortcut to expand dropdown menu
     * tab completion
     * breadcrumbs-style clickable interaction (like nautilus)
-* show carla presets
+    * searching searches both the cwd and plugins
+* show carla and ingen presets (both in the filebrowser and in a treeview under each plugin)
+* add ingen presets to plugin viewer
+* author/project search for plugins
 
 ### ui/interaction
 * touch interaction
 
 ### plugins
-* figure out how to get information from plugins
+* figure out how to get information from ladspa,lv2,vst
 
 ## KNOWN ISSUES
 * folders have to be doubleclicked

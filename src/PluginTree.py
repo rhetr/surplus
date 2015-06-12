@@ -10,10 +10,22 @@ class PluginNode(Node):
         super(PluginNode, self).__init__(name, parent)
         self.uri = uri
 
+    def recursePluginTypes(self, category):
+        types = [category.name]
+        if category.parent:
+            types += self.recursePluginTypes(category.parent)
+        return types
+
+    def types(self):
+        if not self.parent:
+            return "no parents wtf"
+        return self.recursePluginTypes(self.parent)
+
 class CategoryNode(Node):
     def __init__(self, name, children=[], parent=None):
         super(CategoryNode, self).__init__(name, parent)
-        self.children = children
+        self.children = []
+        self.children = list(map(self.add, children)) if children else []
 
     def __iter__(self):
         for child in self.children:
@@ -30,3 +42,16 @@ class CategoryNode(Node):
         """ I don't thinks this actually works """ 
         node.parent = None
         self.children.remove(node)
+
+    def recursePlugins(self, node):
+        plugins = []
+        if node:
+            for child in node:
+                if type(child) == PluginNode:
+                    plugins.append(child)
+                else:
+                    plugins += self.recursePlugins(child)
+        return plugins
+
+    def getAllPlugins(self):
+        return self.recursePlugins(self)
