@@ -8,10 +8,9 @@ from BaseList import *
 
 
 class PluginListItem(BaseListItem):
-    def __init__(self, node):
+    def __init__(self, node, args): # args is ignored
         is_single = (type(node) == PluginNode)
-        text = node.name if is_single else node.name.strip('<').strip('>').split('#')[-1]
-
+        text = node.name if is_single else node.name.strip('<>').split('#')[-1]
         if not is_single and 'linuxdsp' in text: # why can't linuxdsp just use normal categories?
             text = os.path.basename(text)
         super(PluginListItem, self).__init__(text, is_single)
@@ -32,6 +31,15 @@ class PluginList(BaseList):
             mimeData.setUrls([QtCore.QUrl(item[0].node.uri)])
             return mimeData
 
+    # just a thought
+    #def mouseDoubleClickEvent(self, event):
+    #    import subprocess
+    #    if self.current_item.is_single:
+    #        subprocess.Popen(("jalv.extui", self.current_item.node.uri.strip('<>')))
+    #        print(self.current_item.node.parent)
+    #    super(PluginList, self).mouseDoubleClickEvent(event)
+
+
     def _keyEvents(self, event):
         if event.key() == QtCore.Qt.Key_Return \
                 or event.key() == QtCore.Qt.Key_Space:
@@ -51,16 +59,7 @@ class PluginList(BaseList):
             self.updateList(self.current_item.node)
 
     def drawContents(self, curr_index=1):
-        for entry in self.cwd_dirs:
-            entry_item = PluginListItem(entry)
-            self.addItem(entry_item)
-        for entry in self.cwd_items:
-            entry_item = PluginListItem(entry)
-            self.addItem(entry_item)
-
-        if not self.selectedItems():
-            self.setCurrentRow(curr_index)
-            self.current_item = self.item(curr_index)
+        super(PluginList, self).drawContents(curr_index, PluginListItem)
 
     def getContents(self):
         '''sort into categories and plugins'''

@@ -116,16 +116,7 @@ class FileList(BaseList):
             self.path_updated.emit(os.getcwd())
 
     def drawContents(self, curr_index=1):
-        for entry in self.cwd_dirs:
-            entry_item = FileListItem(entry, False)
-            self.addItem(entry_item)
-        for entry in self.cwd_items:
-            entry_item = FileListItem(entry, True)
-            self.addItem(entry_item)
-
-        if not self.selectedItems():
-            self.setCurrentRow(curr_index)
-            self.current_item = self.item(curr_index)
+        super(FileList, self).drawContents(curr_index, FileListItem)
 
     def enablePlayback(self, state):
         config['Play'] = state

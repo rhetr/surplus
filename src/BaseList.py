@@ -33,10 +33,6 @@ class BaseList(QtGui.QListWidget):
         config['Recent'].append(path)
         if len(config['Recent']) > 50: config['Recent'].pop(0)
 
-    def _keyEvents(self, event):
-        '''reimplement'''
-        pass
-
     def event(self, event):
         if type(event) == QtGui.QKeyEvent \
                 and event.key() == QtCore.Qt.Key_Tab:
@@ -45,6 +41,9 @@ class BaseList(QtGui.QListWidget):
         else:
             return super(BaseList, self).event(event)
 
+    def _keyEvents(self, event):
+        '''should be reimplemented'''
+        pass
 
     def keyPressEvent(self, event):
         if type(event) == QtGui.QKeyEvent:
@@ -64,6 +63,10 @@ class BaseList(QtGui.QListWidget):
         self.current_item = self.item(row)
         self.select_flag = True
 
+    def parseInput(self, text):
+        '''should be reimplemented'''
+        pass
+
     def updateList(self, dest):
         '''should be reimplemented'''
         pass
@@ -72,12 +75,13 @@ class BaseList(QtGui.QListWidget):
         '''should be reimplemented'''
         pass
 
-    def drawContents(self, curr_index=1):
+    def drawContents(self, curr_index=1, list_item_type=BaseListItem):
+        assert issubclass(list_item_type, BaseListItem)
         for entry in self.cwd_dirs:
-            entry_item = BaseListItem(entry, False)
+            entry_item = list_item_type(entry, False)
             self.addItem(entry_item)
         for entry in self.cwd_items:
-            entry_item = BaseListItem(entry, True)
+            entry_item = list_item_type(entry, True)
             self.addItem(entry_item)
 
         if not self.selectedItems():
