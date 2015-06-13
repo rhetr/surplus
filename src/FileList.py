@@ -23,9 +23,13 @@ class FileListItem(BaseListItem):
         self.playing = None
 
     def playSample(self):
+        self.stop()
+        self.playing = play(self.text)
+
+    def stop(self):
         if self.playing:
             os.killpg(self.playing.pid, signal.SIGTERM)
-        self.playing = play(self.text)
+
 
 class FileList(BaseList):
     sample_playing = QtCore.pyqtSignal(bool)
@@ -91,6 +95,7 @@ class FileList(BaseList):
         return dir_list, file_list
 
     def itemSelected(self, row):
+        if self.current_item: self.current_item.stop()
         super(FileList, self).itemSelected(row)
         if self.current_item and self.current_item.is_single:
             self.sample_selected.emit(self.current_item.text)
