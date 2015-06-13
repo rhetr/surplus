@@ -14,6 +14,8 @@ from PyQt4 import QtGui, QtCore
 from PluginTreeBuilder import *
 from PluginList import *
 from FileList import *
+from WaveViewer import *
+
 from config import *
 
 def handler(*args):
@@ -28,83 +30,6 @@ def handler(*args):
             yaml.dump(config, config_file_settings)
     print('exiting')
     sys.exit(0)
-
-def getLength(a_file):
-    x = (FFMPEG_BIN, '-i', str(a_file))
-    try:
-        output = subprocess.check_output(x, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as err:
-        output = str(err)
-    finished = output.split('\n')
-    for line in finished:
-        if "Duration" in line:
-            finished = line
-            break
-    return datetime.datetime.strptime(
-        finished.split()[1][:-1], '%H:%M:%S.%f'
-        ).time()
-
-class PlayView(QtGui.QGraphicsView):
-    def __init__(self):
-        QtGui.QGraphicsView.__init__(self)
-        self.setBackgroundBrush(QtGui.QColor(34, 34, 34))
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-
-
-        self.scene = QtGui.QGraphicsScene(self)
-        #self.item = QtGui.QGraphicsLineItem(0, 0, 0, 20)
-        self.rect = QtGui.QGraphicsRectItem(0, 0, 100, 20)
-        self.rect.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0, 0)))
-        #self.scene.addItem(self.item)
-        self.scene.addItem(self.rect)
-        self.setScene(self.scene)
-        self.setAlignment(QtCore.Qt.AlignLeft)
-
-        self.path = None
-
-    def resizeEvent(self, event):
-        self.fitInView(self.rect)
-        QtGui.QGraphicsView.resizeEvent(self, event)
-
-    def mil(self, length):
-        return length.hour*3.6e6 + \
-            length.minute * 6e4 + \
-            length.second * 1000 + \
-            length.microsecond * .001
-
-    def loadFile(self, a_file):
-        if config['Show Waveform']:
-            if self.path:
-                self.scene.removeItem(self.path)
-                self.path = None
-            if a_file:
-                #length = self.mil(getLength(a_file))
-                #if length < 30e3:
-                thread = waveThread(a_file)
-                thread.finished.connect(self.loadWave)
-                thread.start()
-
-    def loadWave(self, arr):
-        self.path = waveForm(arr)
-        clearpen = QtGui.QPen(QtGui.QColor(70, 122, 100, 150))
-        self.path.setPen(clearpen)
-        self.scene.addItem(self.path)
-
-        # self.tl = QtCore.QTimeLine(length)
-        # self.tl.setFrameRange(0, length/10)
-        # self.a = QtGui.QGraphicsItemAnimation()
-        # self.a.setItem(self.item)
-        # self.a.setTimeLine(self.tl)
-
-        # self.a.setPosAt(1, QtCore.QPointF(100, 0))
-
-    def animate(self):
-        self.tl.start()
-
-# remnants of the qgraphicsview
-#    # def paint(self, painter, option, widget=None):
-#    #     QtGui.QGraphicsView.paint(self, painter, paint_option, widget)
 
 class InputWidget(QtGui.QComboBox):
     path_updated = QtCore.pyqtSignal(str)
@@ -222,7 +147,7 @@ class MainWindow(QtGui.QWidget):
         self.tab1.parseInput = self.files.parseInput
 
         self.playCheck = QtGui.QCheckBox()
-        self.waveRect = PlayView()
+        self.waveRect = WaveViewer()
         self.waveRect.setMaximumHeight(20)
         self.waveRect.setFrameShape(QtGui.QFrame.NoFrame)
         hBox = QtGui.QHBoxLayout()

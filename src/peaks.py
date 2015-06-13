@@ -18,14 +18,13 @@ class WaveThread(QThread):
         self.audio_file = audio_file
         self.wave_item = wave_item
 
-    def __del__(self):
-        self.wait()
-
     def run(self):
         pf = self.audio_file + '.pf'
-        #self.wave = pickle.load(open(pf, 'rb')) if os.path.exists(pf) else self.makeWave(self.audio_file)
-        self.wave = self.makeWave(self.audio_file)
-        self.wave_item.loadWave(self.wave)
+        try:
+            wave = pickle.load(open(pf, 'rb')) if os.path.exists(pf) else self.makeWave(self.audio_file)
+        except UnicodeDecodeError:
+            wave = self.makeWave(self.audio_file)
+        self.wave_item.loadWave(wave)
         self.finished.emit(self.wave_item)
 
     def makeWave(self, audio_file):
@@ -47,15 +46,15 @@ class WaveThread(QThread):
         audio_array *= (height/float(np.amax(audio_array)))
         audio_array += height
         size = audio_array.size
-        print(size)
+        #print(size)
         t = np.linspace(0,width,size)
         wave = np.array((audio_array,t))
-        #pickle.dump(wave, open(audio_file + '.pf', 'wb'), protocol=2)
-        print('finished making wave')
+        pickle.dump(wave, open(audio_file + '.pf', 'wb'), protocol=2)
+        print('finished making {}'.format(audio_file))
         return wave
 
 
-class wavePathItem(QGraphicsPathItem):
+class WavePathItem(QGraphicsPathItem):
     def __init__(self, wave=None):
         QGraphicsPathItem.__init__(self)
         if wave:

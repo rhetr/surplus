@@ -6,7 +6,6 @@ import signal
 from PyQt4 import QtGui, QtCore
 
 from BaseList import *
-from peaks import *
 from config import *
 
 exts = ['wav', 'mp3', 'ogg', 'flac', 'm4a']
