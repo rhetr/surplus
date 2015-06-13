@@ -6,33 +6,17 @@ import numpy as np
 import sys
 import os
 import pickle
-from PyQt4 import QtGui, QtCore
-import datetime
 
-class Test(QtGui.QGraphicsView):
-    def __init__(self):
-        QtGui.QGraphicsView.__init__(self)
-        self.scene = QtGui.QGraphicsScene()
-        self.setScene(self.scene)
+from PyQt4.QtGui import QGraphicsPathItem, QPainterPath
+from PyQt4.QtCore import QThread, QPointF, pyqtSignal
 
-        audio_file = '/media/Data/audio/sounds/drum sounds/[99Sounds] 99 Drum Samples/Samples/kick-slapback.wav'
-        audio_file = '/media/Data/audio/cats/Portamento Electro.m4a'
-        print(os.path.exists(audio_file))
-        thread = waveThread(audio_file)
-        thread.finished.connect(self.load)
-        thread.start()
+class WaveThread(QThread):
+    finished = pyqtSignal(object)
 
-    def load(self, wave):
-        path = waveForm(wave)
-        self.scene.addItem(path)
-
-
-class waveThread(QtCore.QThread):
-    finished = QtCore.pyqtSignal(np.ndarray)
-
-    def __init__(self, audio_file):
-        QtCore.QThread.__init__(self)
+    def __init__(self, audio_file, wave_item):
+        QThread.__init__(self)
         self.audio_file = audio_file
+        self.wave_item = wave_item
 
     def __del__(self):
         self.wait()
@@ -41,7 +25,8 @@ class waveThread(QtCore.QThread):
         pf = self.audio_file + '.pf'
         #self.wave = pickle.load(open(pf, 'rb')) if os.path.exists(pf) else self.makeWave(self.audio_file)
         self.wave = self.makeWave(self.audio_file)
-        self.finished.emit(self.wave)
+        self.wave_item.loadWave(self.wave)
+        self.finished.emit(self.wave_item)
 
     def makeWave(self, audio_file):
         height = 10
@@ -65,26 +50,25 @@ class waveThread(QtCore.QThread):
         print(size)
         t = np.linspace(0,width,size)
         wave = np.array((audio_array,t))
-        pickle.dump(wave, open(audio_file + '.pf', 'wb'), protocol=2)
+        #pickle.dump(wave, open(audio_file + '.pf', 'wb'), protocol=2)
         print('finished making wave')
         return wave
 
 
-class waveForm(QtGui.QGraphicsPathItem):
+class wavePathItem(QGraphicsPathItem):
     def __init__(self, wave=None):
-        QtGui.QGraphicsPathItem.__init__(self)
-        first = QtCore.QPointF(wave[1,0],wave[0,0])
-        s = datetime.datetime.now()
-        #x = [(wave[1,i], wave[0,i]) for i in range(1, wave.shape[1])]
-        path = QtGui.QPainterPath(first)
+        QGraphicsPathItem.__init__(self)
+        if wave:
+            self.loadWave(wave)
+
+    def loadWave(self, wave):
+        first = QPointF(wave[1,0],wave[0,0])
+        path = QPainterPath(first)
         for i in range(1, wave.shape[1]):
             path.lineTo(wave[1,i],wave[0,i])
-        x = datetime.datetime.now() - s
-        print((x.seconds, x.microseconds))
-
         self.setPath(path)
 
-
+## needs ffmpeg or avconv
 def which(program):
     import os
     def is_exe(fpath):
@@ -100,7 +84,6 @@ def which(program):
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):
                 return exe_file
-
     return None
 
 if which('ffmpeg'):
@@ -111,10 +94,32 @@ else:
     print('ffmpeg or avconv not installed')
     sys.exit()
 
-
 if __name__ == '__main__':
+    from PyQt4.QtGui import QGraphicsScene, QGraphicsView, QWidget, QApplication, QPushButton, QVBoxLayout
 
-    example = QtGui.QApplication(sys.argv)
-    test2 = Test()
-    test2.show()
-    sys.exit(example.exec_())
+    class Test(QGraphicsView):
+        def __init__(self, audio_file):
+            QGraphicsView.__init__(self)
+            self.scene = QGraphicsScene()
+            self.setScene(self.scene)
+            if os.path.exists(audio_file):
+                waveform = wavePathItem()
+                self.thread = WaveThread(audio_file, waveform)
+                self.thread.finished.connect(self.load)
+                self.thread.start()
+
+        def load(self, waveform):
+            self.scene.addItem(waveform)
+
+    app = QApplication(sys.argv)
+    main = QWidget()
+    l = QVBoxLayout()
+    button = QPushButton()
+    test2 = Test('/media/Data/audio/cats/Portamento Electro.m4a')
+    test3 = Test('/media/Data/audio/sounds/drum sounds/[99Sounds] 99 Drum Samples/Samples/kick-slapback.wav')
+    l.addWidget(button)
+    l.addWidget(test2)
+    l.addWidget(test3)
+    main.setLayout(l)
+    main.show()
+    sys.exit(app.exec_())
