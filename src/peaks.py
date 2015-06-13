@@ -19,13 +19,15 @@ class WaveThread(QThread):
         self.wave_item = wave_item
 
     def run(self):
+        self.active = True
         pf = self.audio_file + '.pf'
         try:
             wave = pickle.load(open(pf, 'rb')) if os.path.exists(pf) else self.makeWave(self.audio_file)
         except UnicodeDecodeError:
             wave = self.makeWave(self.audio_file)
         self.wave_item.loadWave(wave)
-        self.finished.emit(self.wave_item)
+        if self.active:
+            self.finished.emit(self.wave_item)
 
     def makeWave(self, audio_file):
         height = 10
@@ -50,7 +52,7 @@ class WaveThread(QThread):
         t = np.linspace(0,width,size)
         wave = np.array((audio_array,t))
         pickle.dump(wave, open(audio_file + '.pf', 'wb'), protocol=2)
-        print('finished making {}'.format(audio_file))
+        #print('finished making {}'.format(audio_file))
         return wave
 
 
@@ -93,32 +95,3 @@ else:
     print('ffmpeg or avconv not installed')
     sys.exit()
 
-if __name__ == '__main__':
-    from PyQt4.QtGui import QGraphicsScene, QGraphicsView, QWidget, QApplication, QPushButton, QVBoxLayout
-
-    class Test(QGraphicsView):
-        def __init__(self, audio_file):
-            QGraphicsView.__init__(self)
-            self.scene = QGraphicsScene()
-            self.setScene(self.scene)
-            if os.path.exists(audio_file):
-                waveform = wavePathItem()
-                self.thread = WaveThread(audio_file, waveform)
-                self.thread.finished.connect(self.load)
-                self.thread.start()
-
-        def load(self, waveform):
-            self.scene.addItem(waveform)
-
-    app = QApplication(sys.argv)
-    main = QWidget()
-    l = QVBoxLayout()
-    button = QPushButton()
-    test2 = Test('/media/Data/audio/cats/Portamento Electro.m4a')
-    test3 = Test('/media/Data/audio/sounds/drum sounds/[99Sounds] 99 Drum Samples/Samples/kick-slapback.wav')
-    l.addWidget(button)
-    l.addWidget(test2)
-    l.addWidget(test3)
-    main.setLayout(l)
-    main.show()
-    sys.exit(app.exec_())

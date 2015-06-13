@@ -35,7 +35,9 @@ class WaveViewer(QtGui.QGraphicsView):
     def loadFile(self, a_file):
         if config['Show Waveform']:
             if self.thread:
-                self.thread.exit()
+                self.thread.active = False
+                self.thread.quit()
+                self.thread.wait()
             if self.waveform:
                 self.scene.clear()
                 self.waveform = None
