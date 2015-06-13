@@ -20,18 +20,19 @@ class PluginTreeBuilder:
                 plugin = PluginNode(str(a.get_name()), str(a.get_uri()))
                 self.root.add(plugin)
                 all_plugins.remove(a)
-
         self.build_tree(all_plugins, self.root)
-        newlist = []
-        uncat = []
-        for child in self.root:
-            if type(child) == PluginNode:
-                uncat.append(child)
-            else:
-                newlist.append(child)
 
-        self.root.children = newlist
-        self.root.add(CategoryNode('Uncategorized', uncat))
+        uncat = CategoryNode('Uncategorized', uncategorized=True)
+        i = 0
+        while i < len(self.root):
+            child = self.root[i]
+            if type(child) == PluginNode:
+                self.root.remove(child, True)
+                uncat.add(child)
+            else:
+                i += 1
+
+        self.root.add(uncat)
 
     def build_tree(self, plugin_list, root=None):
         unsorted_plugins = []
