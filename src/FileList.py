@@ -42,6 +42,7 @@ class FileList(BaseList):
 
     def mimeData(self, item):
         path = os.path.abspath(str(item[0].text))
+        print(path)
         if os.path.isfile(path):
             mimeData = QtCore.QMimeData()
             mimeData.setUrls([QtCore.QUrl.fromLocalFile(path)])
@@ -99,6 +100,11 @@ class FileList(BaseList):
         if self.current_item and self.current_item.is_single:
             self.sample_selected.emit(self.current_item.text)
             if self.playback_enabled: self.current_item.playSample()
+
+    def updateRecent(self, path):
+        if path in config['Recent']: config['Recent'].remove(path)
+        config['Recent'].append(path)
+        if len(config['Recent']) > 50: config['Recent'].pop(0)
 
     def updateList(self, dest):
         self.clear()

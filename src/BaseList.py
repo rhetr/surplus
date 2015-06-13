@@ -28,11 +28,6 @@ class BaseList(QtGui.QListWidget):
         self.currentRowChanged.connect(self.itemSelected)
         self.itemClicked.connect(self.activatePressed)
 
-    def updateRecent(self, path):
-        if path in config['Recent']: config['Recent'].remove(path)
-        config['Recent'].append(path)
-        if len(config['Recent']) > 50: config['Recent'].pop(0)
-
     def event(self, event):
         if type(event) == QtGui.QKeyEvent \
                 and event.key() == QtCore.Qt.Key_Tab:
