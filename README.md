@@ -58,7 +58,6 @@ python3, numpy, pyqt4, ffmpeg/avconv, sox, yaml, lilv
 * if you use the arrow keys down to a file and then click it, it doesn't trigger the first time
 * when you follow a symbolic link and go back it takes you to back through the original path
 * j is treated differently from left arrow for some reason
-* waveforms take a while to load and slow down everything
 * peak files are big
 
 ## THOUGHTS
