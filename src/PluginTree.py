@@ -8,21 +8,23 @@ class Node:
     def __str__(self):
         return self.name
 
-    def recurseTypes(self, category):
+    def _recurseTypes(self, category):
         types = [category.name]
         if category.parent:
-            types += self.recurseTypes(category.parent)
+            types += self._recurseTypes(category.parent)
         return types
 
     def types(self):
         if not self.parent:
             return [self] # this should only be root
-        return self.recurseTypes(self.parent)
+        return self._recurseTypes(self.parent)
 
 class PluginNode(Node):
-    def __init__(self, name, uri, parent=None):
+    def __init__(self, name, uri, author, parent=None):
         super(PluginNode, self).__init__(name, parent)
         self.uri = uri
+        self.author = author if author else ''
+        #self.project = project
 
 class CategoryNode(Node):
     def __init__(self, name, children=[], parent=None, uncategorized=False):

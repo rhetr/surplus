@@ -32,12 +32,12 @@ class PluginList(BaseList):
             return mimeData
 
     # just a thought
-    #def mouseDoubleClickEvent(self, event):
-    #    import subprocess
-    #    if self.current_item.is_single:
-    #        subprocess.Popen(("jalv.extui", self.current_item.node.uri.strip('<>')))
-    #        print(self.current_item.node.parent)
-    #    super(PluginList, self).mouseDoubleClickEvent(event)
+    def mouseDoubleClickEvent(self, event):
+        import subprocess
+        if self.current_item.is_single:
+            subprocess.Popen(("jalv.gtk", self.current_item.node.uri.strip('<>')))
+            print(self.current_item.node.parent)
+        super(PluginList, self).mouseDoubleClickEvent(event)
 
 
     def _keyEvents(self, event):
@@ -96,7 +96,8 @@ class PluginList(BaseList):
         results = list(
                 filter(lambda x: 
             str(text.lower()) in x.name.lower() or
-            any(str(text.lower()) in cat.lower() for cat in x.types()), self.plugins))
+            any(str(text.lower()) in cat.lower() for cat in x.types()) or
+            str(text.lower()) in x.author.lower(), self.plugins))
         self.showSearch(results)
 
     def showSearch(self, results):

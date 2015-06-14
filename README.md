@@ -24,7 +24,7 @@ python3, numpy, pyqt4, ffmpeg/avconv, sox, yaml, lilv
 * the config file is in $HOME/.config/surplus/config
 * add/remove favorite places to the dropdown filepath menu by clicking the +/- button 
 * drag and drop plugins into ingen.place to add them to a graph
-* search for plugins by name or category
+* search for plugins by name, category or author
 
 
 ## TODO
@@ -45,7 +45,7 @@ python3, numpy, pyqt4, ffmpeg/avconv, sox, yaml, lilv
     * searching searches both the cwd and plugins
 * show carla and ingen presets (both in the filebrowser and in a treeview under each plugin)
 * add ingen presets to plugin viewer
-* author/project search for plugins
+* project search for plugins (doesn't look like the python lilv bindings are up for it yet...)
 
 ### ui/interaction
 * touch interaction
