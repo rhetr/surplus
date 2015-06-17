@@ -27,28 +27,23 @@ QTabBar::tab:selected {
     color: rgb(90,132,200);
 }
 
-InputWidget {
+QComboBox {
     width: 100%;
     background: #555;
     border-radius:0px;
     color: white;
 }
 
-InputWidget::drop-down {
+QComboBox::drop-down {
     border:1px solid #aaa;
 }
 
-BaseList {
+QListWidget {
     background-color: #111;
     color: #aaa;
     border-radius: 0px;
 }
 
-BaseList::item:selected {
+QListWidget::item:selected {
     background-color: rgb(50,102,150);
-}
-
-QTreeWidget {
-    background-color: #111;
-    color: #aaa;
 }

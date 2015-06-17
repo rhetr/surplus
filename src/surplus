@@ -10,7 +10,6 @@ import signal
 import datetime
 from PyQt4 import QtGui, QtCore
 
-
 from PluginTreeBuilder import *
 from PluginList import *
 from FileList import *
@@ -272,11 +271,8 @@ if __name__ == '__main__':
         signal.signal(sig, handler)
     app = QtGui.QApplication(sys.argv)
 
-    with open(config['Stylesheet'], 'r') as content_file:
-        content = content_file.read()
-    #stylesheet = QtCore.QLatin1String(content)
-    stylesheet = content
-    app.setStyleSheet(stylesheet)
+    style = open(config['Stylesheet'], 'r').read()
+    app.setStyleSheet(style)
     app.aboutToQuit.connect(handler)
 
     main = MainWindow()
