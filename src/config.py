@@ -22,7 +22,7 @@ config_default['Show Waveform'] = True
 if not os.path.isfile(config_file):
     print('making new config file')
     config = config_default
-    with open(config_file, 'wb') as config_file_settings:
+    with open(config_file, 'w') as config_file_settings:
         yaml.dump(config_default, config_file_settings)
 else:
     print('opening existing config')
