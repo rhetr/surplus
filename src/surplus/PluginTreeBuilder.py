@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
-
 import sys
 import lilv
-from PyQt4 import QtGui, QtCore
+from PyQt6 import QtGui, QtCore
 
-from PluginTree import *
+from .PluginTree import CategoryNode, PluginNode
+
 
 class PluginTreeBuilder:
     ''' this is a terrible class '''
@@ -29,7 +28,7 @@ class PluginTreeBuilder:
         i = 0
         while i < len(self.root):
             child = self.root[i]
-            if type(child) == PluginNode:
+            if type(child) is PluginNode:
                 self.root.remove(child, True)
                 uncat.add(child)
             else:
@@ -51,7 +50,13 @@ class PluginTreeBuilder:
                     root.add(plugin)
                 elif str(a.get_class().get_parent_uri()) == root.name:
                     node = str(a.get_class().get_uri())
-                    children = map(lambda y: y.name, filter(lambda x: type(x) == CategoryNode, root.children))
+                    children = map(
+                            lambda y: y.name,
+                            filter(
+                                lambda x: type(x) is CategoryNode,
+                                root.children
+                                )
+                            )
                     if node not in children:
                         plugin = PluginNode(
                                 str(a.get_name()),
@@ -62,7 +67,10 @@ class PluginTreeBuilder:
                         root.add(category)
                     else:
                         for i in range(len(root.children)):
-                            if type(root.children[i] == CategoryNode) and root.children[i].name == node:
+                            if (
+                                    type(root.children[i]) is CategoryNode
+                                    and root.children[i].name == node
+                                    ):
                                 plugin = PluginNode(
                                         str(a.get_name()),
                                         str(a.get_uri()),
@@ -72,12 +80,12 @@ class PluginTreeBuilder:
                 else:
                     unsorted_plugins.append(a)
             for child in root.children:
-                if type(child) == CategoryNode:
+                if type(child) is CategoryNode:
                     self.build_tree(unsorted_plugins, child)
 
 
 if __name__ == '__main__':
-    from PluginList import *
+    from PluginList import PluginList
     app = QtGui.QApplication(sys.argv)
     build = PluginTreeBuilder()
     root = build.root

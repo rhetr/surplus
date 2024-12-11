@@ -1,21 +1,19 @@
-#!/usr/bin/env python3
-
-'''
-surplus
-'''
 import sys
 import os
+import yaml
 import subprocess
-import signal
-import datetime
-from PyQt4 import QtGui, QtCore
+from PyQt6.QtCore import QEvent, Qt, QSize, pyqtSignal
+from PyQt6.QtGui import QFontMetrics, QKeyEvent
+from PyQt6.QtWidgets import QComboBox, QWidget, QStackedWidget, QTabBar, \
+        QScrollBar, QPushButton, QVBoxLayout, QHBoxLayout, QFrame, QCheckBox
 
-from PluginTreeBuilder import *
-from PluginList import *
-from FileList import *
-from WaveViewer import *
+# from PluginTreeBuilder import *
+# from PluginList import *
+from .FileList import FileList
+from .WaveViewer import WaveViewer
 
-from config import *
+from .config import config
+
 
 def handler(*args):
     '''saves the config and kills play before exiting'''
@@ -24,22 +22,21 @@ def handler(*args):
     if not config:
         print('error, config not saved')
     else:
-        print('saving config')
-        with open(config_file, 'w') as config_file_settings:
-            yaml.dump(config, config_file_settings)
+        config.save()
     print('exiting')
     sys.exit(0)
 
-class InputWidget(QtGui.QComboBox):
-    path_updated = QtCore.pyqtSignal(str)
-    tab_pressed = QtCore.pyqtSignal()
-    esc_pressed = QtCore.pyqtSignal()
+
+class InputWidget(QComboBox):
+    path_updated = pyqtSignal(str)
+    tab_pressed = pyqtSignal()
+    esc_pressed = pyqtSignal()
 
     def __init__(self):
-        QtGui.QComboBox.__init__(self)
+        QComboBox.__init__(self)
         self.setEditable(True)
-        self.setInsertPolicy(QtGui.QComboBox.NoInsert)
-        self.addItems(config['Places'])
+        self.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.addItems(config.settings['Places'])
         self.addItem('Recent')
         self.resize()
         self.activated.connect(self.updatePath)
@@ -48,38 +45,46 @@ class InputWidget(QtGui.QComboBox):
         self.path_updated.emit(self.currentText())
 
     def event(self, event):
-        if event.type() == QtCore.QEvent.KeyPress:
-            if event.key() == QtCore.Qt.Key_Tab:
+        if event.type() == QEvent.Type.KeyPress:
+            if event.key() == Qt.Key.Key_Tab:
                 self.tab_pressed.emit()
                 return True
-            elif event.key() == QtCore.Qt.Key_Escape:
+            elif event.key() == Qt.Key.Key_Escape:
                 self.setEditText(self.prev_text)
                 self.esc_pressed.emit()
                 return True
-        return QtGui.QComboBox.event(self, event)
+        return QComboBox.event(self, event)
 
     def keyPressEvent(self, event):
-        QtGui.QComboBox.keyPressEvent(self, event)
-        if event.key() == QtCore.Qt.Key_Return:
+        QComboBox.keyPressEvent(self, event)
+        if event.key() == Qt.Key.Key_Return:
             if os.path.isdir(self.currentText()):
                 self.path_updated.emit(self.currentText())
             self.esc_pressed.emit()
 
     def focusInEvent(self, event):
         self.prev_text = self.currentText()
-        QtGui.QComboBox.focusInEvent(self, event)
+        QComboBox.focusInEvent(self, event)
 
     def resize(self):
-        font = QtGui.QFontMetrics(self.font())
-        max_width = 40 + max((font.width(place) for place in config['Places']))
+        font = QFontMetrics(self.font())
+        max_width = 0
+        for place in config.settings['Places']:
+            width = 0
+            for p in place:
+                width += font.boundingRect(p).width()
+            if width > max_width:
+                max_width = width
+        max_width += 40
         self.view().setMinimumWidth(max_width)
 
-class MainWindow(QtGui.QWidget):
+
+class Surplus(QWidget):
 
     def __init__(self):
-        QtGui.QWidget.__init__(self)
-        # self.setAttribute(QtCore.Qt.WA_AcceptTouchEvents)
-        self.setWindowFlags(QtCore.Qt.Dialog)
+        QWidget.__init__(self)
+        # self.setAttribute(Qt.WA_AcceptTouchEvents)
+        # self.setWindowFlags(Qt.Dialog)
         self.setWindowTitle('Surplus')
 
         self._initWidgets()
@@ -88,83 +93,84 @@ class MainWindow(QtGui.QWidget):
         self._initMainLayout()
 
         self.addTab(self.tab1, "browser")
-        self.addTab(self.tab2, "plugins")
+        # self.addTab(self.tab2, "plugins")
 
         self._initConnections()
         self.files.setFocus()
         self.inputBox.editTextChanged.connect(self.parseInput)
 
     def _initWidgets(self):
-        self.widgetStack = QtGui.QStackedWidget()
+        self.widgetStack = QStackedWidget()
 
-        self.tabBar = QtGui.QTabBar()
-        self.tabBar.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.tabBar = QTabBar()
+        self.tabBar.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.tabBar.currentChanged.connect(self.switchTabs)
-        self.tabBar.setShape(QtGui.QTabBar.RoundedWest)
+        self.tabBar.setShape(QTabBar.Shape.RoundedWest)
         self.tabBar.updateGeometry()
-        
-        self.scrollBar = QtGui.QScrollBar()
-        self.scrollBar.setFocusPolicy(QtCore.Qt.NoFocus)
+
+        self.scrollBar = QScrollBar()
+        self.scrollBar.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.scrollBar.rangeChanged.connect(self.scrollHide)
-        self.blank = QtGui.QWidget(parent=self)
-        self.blank.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.blank = QWidget(parent=self)
+        self.blank.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.blank.hide()
 
-        self.placesButton = QtGui.QPushButton("+")
-        self.placesButton.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.placesButton = QPushButton("+")
+        self.placesButton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.placesButton.sizeHint = self.placesButtonSizeHint
 
-        self.tabLayoutBox = QtGui.QVBoxLayout()
-        self.tabLayoutBox.setContentsMargins(0,0,0,0)
+        self.tabLayoutBox = QVBoxLayout()
+        self.tabLayoutBox.setContentsMargins(0, 0, 0, 0)
         self.tabLayoutBox.setSpacing(0)
-        self.tabLayoutBox.setMargin(0)
-        self.tabLayoutBox.setAlignment(QtCore.Qt.AlignLeft)
+        # self.tabLayoutBox.setMargin(0) # doesn't appear available in PyQt6?
+        self.tabLayoutBox.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.tabLayoutBox.addWidget(self.placesButton)
         self.tabLayoutBox.addWidget(self.tabBar)
         self.tabLayoutBox.addWidget(self.scrollBar)
         self.tabLayoutBox.addWidget(self.blank)
 
     def _initMainLayout(self):
-        mainHBox = QtGui.QHBoxLayout()
-        mainHBox.setContentsMargins(0,0,0,0)
-        mainHBox.setMargin(0)
+        mainHBox = QHBoxLayout()
+        mainHBox.setContentsMargins(0, 0, 0, 0)
+        # mainHBox.setMargin(0)
         mainHBox.setSpacing(0)
         mainHBox.addLayout(self.tabLayoutBox)
         mainHBox.addWidget(self.widgetStack)
 
-        mainVBox = QtGui.QVBoxLayout()
+        mainVBox = QVBoxLayout()
         mainVBox.addWidget(self.inputBox)
         mainVBox.addLayout(mainHBox)
         self.setLayout(mainVBox)
 
     def _initFilesTab(self):
-        self.tab1 = QtGui.QWidget()
+        self.tab1 = QWidget()
         self.inputBox = InputWidget()
-        self.inputBox.setFrame(QtGui.QFrame.NoFrame)
-        self.files = FileList(config['Default Folder'])
+        self.inputBox.setFrame(QFrame.Shape.NoFrame)
+        self.files = FileList(config.settings['Default Folder'])
         self.files.setVerticalScrollBar(self.scrollBar)
         self.tab1.parseInput = self.files.parseInput
 
-        self.playCheck = QtGui.QCheckBox()
+        self.playCheck = QCheckBox()
         self.waveRect = WaveViewer()
         self.waveRect.setMaximumHeight(20)
-        self.waveRect.setFrameShape(QtGui.QFrame.NoFrame)
-        hBox = QtGui.QHBoxLayout()
+        self.waveRect.setFrameShape(QFrame.Shape.NoFrame)
+        hBox = QHBoxLayout()
         hBox.addWidget(self.playCheck)
         hBox.addWidget(self.waveRect)
 
-        tab1Layout = QtGui.QVBoxLayout()
+        tab1Layout = QVBoxLayout()
         tab1Layout.setContentsMargins(0, 0, 0, 0)
         tab1Layout.setSpacing(0)
-        tab1Layout.setMargin(0)
+        # tab1Layout.setMargin(0)
         tab1Layout.addWidget(self.files)
         tab1Layout.addLayout(hBox)
         self.tab1.setLayout(tab1Layout)
 
     def _initPluginsTab(self):
-        build = PluginTreeBuilder()
-        self.tab2 = PluginList(build.root)
-        self.tab2.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        pass
+        # build = PluginTreeBuilder()
+        # self.tab2 = PluginList(build.root)
+        # self.tab2.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
     def _initConnections(self):
         self.files.tab_pressed.connect(self.switchTabs)
@@ -174,20 +180,20 @@ class MainWindow(QtGui.QWidget):
 
         self.files.path_updated.connect(self.updatePath)
         self.inputBox.path_updated.connect(self.updateList)
-        self.files.path_updated.emit(config['Default Folder'])
+        self.files.path_updated.emit(config.settings['Default Folder'])
 
         self.files.sample_selected.connect(self.waveRect.loadFile)
         self.playCheck.stateChanged.connect(self.files.enablePlayback)
 
-        self.tab2.tab_pressed.connect(self.switchTabs)
-        self.tab2.slash_pressed.connect(self.focusPath)
+        # self.tab2.tab_pressed.connect(self.switchTabs)
+        # self.tab2.slash_pressed.connect(self.focusPath)
 
-        if config['Play']:
+        if config.settings['Play']:
             self.playCheck.setChecked(True)
-            self.playCheck.stateChanged.emit(QtCore.Qt.Checked)
+            # self.playCheck.stateChanged.emit()  # Qt.CheckState.Checked)
         else:
             self.playCheck.setChecked(False)
-            self.playCheck.stateChanged.emit(QtCore.Qt.Unchecked)
+            # self.playCheck.stateChanged.emit()  # Qt.CheckState.Unchecked)
 
         self.placesButton.clicked.connect(self.modifyPlaces)
 
@@ -195,32 +201,34 @@ class MainWindow(QtGui.QWidget):
         self.widgetStack.currentWidget().parseInput(text)
 
     def updateButton(self, text):
-        if os.path.realpath(os.path.abspath(text)) == \
-                os.path.realpath(os.path.abspath(config['Default Folder'])) or \
-                text == 'Recent':
+        if (
+                os.path.realpath(os.path.abspath(text)) ==
+                os.path.realpath(
+                    os.path.abspath(config.settings['Default Folder'])
+                    ) or
+                text == 'Recent'
+                ):
             self.placesButton.setEnabled(False)
             return
         self.placesButton.setEnabled(True)
         path = os.path.realpath(os.path.abspath(text))
-        places = (os.path.realpath(sym) for sym in config['Places'])
+        places = (os.path.realpath(sym) for sym in config.settings['Places'])
         text = '-' if path in places else '+'
         self.placesButton.setText(text)
 
     def modifyPlaces(self):
         path = os.getcwd()
-        places = [os.path.realpath(sym) for sym in config['Places']]
-        if path in places:
-            self.inputBox.removeItem(places.index(path))
-            config['Places'].pop(places.index(path))
+        removed = config.modifyPlaces(path)
+        if removed:
+            self.inputBox.removeItem(config.getPlacesIndex(path))
             self.placesButton.setText('+')
         else:
-            config['Places'].append(path)
-            self.inputBox.insertItem(config['Places'].index(path), path)
+            self.inputBox.insertItem(config.getPlacesIndex(path), path)
             self.placesButton.setText('-')
         self.inputBox.resize()
 
     def scrollHide(self, a, b):
-        if a==b and not self.scrollBar.isHidden():
+        if a == b and not self.scrollBar.isHidden():
             self.scrollBar.hide()
             self.blank.show()
         elif self.scrollBar.isHidden():
@@ -232,49 +240,35 @@ class MainWindow(QtGui.QWidget):
         self.tabBar.addTab(name)
 
     def sizeHint(self):
-        return QtCore.QSize(220, 500)
+        return QSize(220, 500)
 
     def placesButtonSizeHint(self):
-        return QtCore.QSize(20,20)
-
+        return QSize(20, 20)
 
     def event(self, event):
-        if type(event) == QtGui.QKeyEvent \
-                and event.key() == QtCore.Qt.Key_Tab:
-                return True
+        if type(event) is QKeyEvent \
+                and event.key() == Qt.Key.Key_Tab:
+            return True
         else:
-            return super(MainWindow, self).event(event)
+            return super(Surplus, self).event(event)
 
     def switchTabs(self, index=None):
         if not index:
-            index = (self.widgetStack.currentIndex()+1) % self.widgetStack.count()
+            index = (self.widgetStack.currentIndex()+1) % self.widgetStack.count() # noqa
         self.tabBar.setCurrentIndex(index)
         self.widgetStack.setCurrentIndex(index)
         # have to move scrollbar too
 
     def focusList(self):
-        self.widgetStack.currentWidget().setFocus(QtCore.Qt.ShortcutFocusReason)
+        self.widgetStack.currentWidget().setFocus(Qt.ShortcutFocusReason) # noqa
 
     def focusPath(self):
-        self.inputBox.setFocus(QtCore.Qt.ShortcutFocusReason)
+        self.inputBox.setFocus(Qt.ShortcutFocusReason)
 
     def updatePath(self, text):
         self.inputBox.setEditText(text)
         self.updateButton(str(text).strip())
 
-    def updateList(self, text): 
+    def updateList(self, text):
         self.files.updateList(str(text).strip())
         self.updateButton(str(text).strip())
-
-if __name__ == '__main__':
-    for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
-        signal.signal(sig, handler)
-    app = QtGui.QApplication(sys.argv)
-
-    style = open(config['Stylesheet'], 'r').read()
-    app.setStyleSheet(style)
-    app.aboutToQuit.connect(handler)
-
-    main = MainWindow()
-    main.show()
-    sys.exit(app.exec_())

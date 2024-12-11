@@ -1,25 +1,27 @@
-#!/usr/bin/env python3
+from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QAbstractItemView, QListWidget, QListWidgetItem
 
-from PyQt4 import QtGui, QtCore
 
-class BaseListItem(QtGui.QListWidgetItem):
+class BaseListItem(QListWidgetItem):
     def __init__(self, text, is_single):
-        QtGui.QListWidgetItem.__init__(self)
+        QListWidgetItem.__init__(self)
         self.is_single = is_single
         self.text = text
         self.text += '/' if not is_single else ''
         self.setText(self.text)
 
-class BaseList(QtGui.QListWidget):
-    tab_pressed = QtCore.pyqtSignal()
-    slash_pressed = QtCore.pyqtSignal()
-    path_updated = QtCore.pyqtSignal(str)
+
+class BaseList(QListWidget):
+    tab_pressed = pyqtSignal()
+    slash_pressed = pyqtSignal()
+    path_updated = pyqtSignal(str)
 
     def __init__(self, parent=None):
-        QtGui.QListWidget.__init__(self, parent)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setDragDropMode(QtGui.QAbstractItemView.DragOnly)
+        QListWidget.__init__(self, parent)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff) # noqa
+        self.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
         self.parent = parent
 
         self.current_item = None
@@ -29,10 +31,9 @@ class BaseList(QtGui.QListWidget):
         self.itemClicked.connect(self.activatePressed)
 
     def event(self, event):
-        if type(event) == QtGui.QKeyEvent \
-                and event.key() == QtCore.Qt.Key_Tab:
-                    self.tab_pressed.emit()
-                    return True
+        if type(event) is QKeyEvent and event.key() == Qt.Key.Key_Tab:
+            self.tab_pressed.emit()
+            return True
         else:
             return super(BaseList, self).event(event)
 
@@ -41,18 +42,24 @@ class BaseList(QtGui.QListWidget):
         pass
 
     def keyPressEvent(self, event):
-        if type(event) == QtGui.QKeyEvent:
-            if event.key() == QtCore.Qt.Key_Slash:
+        if type(event) is QKeyEvent:
+            if event.key() == Qt.Key.Key_Slash:
                 self.slash_pressed.emit()
-            elif event.key() == QtCore.Qt.Key_K:
-                event = QtGui.QKeyEvent(event.type(), QtCore.Qt.Key_Down, QtCore.Qt.NoModifier)
-            elif event.key() == QtCore.Qt.Key_L:
-                event = QtGui.QKeyEvent(event.type(), QtCore.Qt.Key_Up, QtCore.Qt.NoModifier)
-            elif event.key() == QtCore.Qt.Key_Left \
-                    or event.key() == QtCore.Qt.Key_J:
+            elif event.key() == Qt.Key.Key_K:
+                event = QKeyEvent(
+                        event.type(),
+                        Qt.Key.Key_Down, Qt.KeyboardMofifier.NoModifier
+                        )
+            elif event.key() == Qt.Key.Key_L:
+                event = QKeyEvent(
+                        event.type(),
+                        Qt.Key.Key_Up, Qt.KeyboardModifier.NoModifier
+                        )
+            elif event.key() == Qt.Key.Key_Left \
+                    or event.key() == Qt.Key.Key_J:
                 self.updateList('..')
             self._keyEvents(event)
-        QtGui.QListWidget.keyPressEvent(self, event)
+        QListWidget.keyPressEvent(self, event)
 
     def itemSelected(self, row):
         self.current_item = self.item(row)
