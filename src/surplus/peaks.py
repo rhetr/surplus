@@ -78,7 +78,7 @@ class WavePathItem(QGraphicsPathItem):
         self.setPath(path)
 
 
-# needs ffmpeg or avconv
+# needs ffmpeg
 def which(program):
     import os
 
@@ -100,8 +100,6 @@ def which(program):
 
 if which('ffmpeg'):
     FFMPEG_BIN = 'ffmpeg'
-elif which('avconv'):
-    FFMPEG_BIN = 'avconv'
 else:
-    print('ffmpeg or avconv not installed')
+    print('ffmpeg not installed')
     sys.exit()

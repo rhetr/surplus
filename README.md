@@ -9,7 +9,14 @@ listen to audio samples in an easily-navigable Qt-based file browser made for th
 ~~plugin browsing (ladspa,dssi,lv2,vst) to come hopefully. **lv2 browsing sort of works! it can be used with my little ingen helper app [ingen.place](http://github.com/rhetr/ingen-scripts) to put stuff in an ingen engine**~~
 
 ## dependencies
-python3, numpy, pyqt6, ffmpeg/avconv, sox, yaml, lilv, uv
+- python3.12
+- numpy
+- PyQt6
+- ffmpeg
+- sox
+- yaml
+- lilv
+- uv
 
 ## get started
 ```sh
@@ -35,6 +42,7 @@ uv run surplus
 
 ## TODO
 * reduce subprocess usage
+* styling
 
 ### usability
 * make a proper install script
